@@ -3,36 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital Analytics Pro</title>
+    <title>Hospital Analytics Pro + PDF Export</title>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root { --primary: #0984e3; --secondary: #00cec9; --dark: #2d3436; --light: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--light); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; }
-
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 20px; }
+        .container { max-width: 1100px; margin: auto; }
+        
         /* Step 1: Upload Screen */
         #uploadScreen { background: white; padding: 50px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 50px; }
-        .drop-zone { border: 3px dashed var(--secondary); padding: 40px; border-radius: 12px; cursor: pointer; transition: 0.3s; background: #f0fdfc; }
-        .drop-zone:hover { background: #e6fffa; border-color: var(--primary); }
-        
-        /* Step 2: Dashboard (Hidden initially) */
+        .drop-zone { border: 3px dashed var(--secondary); padding: 40px; border-radius: 12px; cursor: pointer; background: #f0fdfc; }
+
+        /* Step 2: Dashboard */
         #mainDashboard { display: none; }
-        
         .control-panel { background: var(--dark); color: white; padding: 20px; border-radius: 12px; display: flex; gap: 15px; align-items: center; margin-bottom: 25px; }
-        input[type="text"] { padding: 12px; border-radius: 6px; border: none; width: 300px; font-size: 1rem; }
-        .btn-analyze { background: var(--secondary); color: var(--dark); padding: 12px 25px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        input[type="text"] { padding: 12px; border-radius: 6px; border: none; width: 250px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-analyze { background: var(--secondary); color: var(--dark); }
+        .btn-pdf { background: #e17055; color: white; }
 
-        .hospital-profile { background: var(--primary); color: white; padding: 25px; border-radius: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .profile-card span { display: block; font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 5px; }
-        .profile-card strong { font-size: 1.2rem; }
-
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        /* Output Styling */
+        #pdf-content { background: white; padding: 20px; border-radius: 12px; }
+        .hospital-profile { background: var(--primary); color: white; padding: 20px; border-radius: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .profile-card span { display: block; font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; background: #f8f9fa; padding: 12px; border-bottom: 2px solid var(--primary); font-size: 0.85rem; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .card { background: white; padding: 20px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; background: #f8f9fa; padding: 10px; border-bottom: 2px solid var(--primary); font-size: 0.8rem; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
         .biz-table td { text-align: center; font-weight: bold; }
     </style>
 </head>
@@ -40,54 +41,56 @@
 
 <div class="container">
     <div id="uploadScreen">
-        <h1>Hospital Claim Analytics</h1>
-        <p>Please upload your Claim Dump Excel file to begin analysis.</p>
+        <h1>Hospital Analytics Portal</h1>
         <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-            <img src="https://img.icons8.com/clouds/100/000000/upload.png" alt="upload icon"><br>
-            <strong>Click to select .xlsx or .xls file</strong>
-            <p id="fileStatus">Accepted columns: HospitalName, ID, RohiniID, Year, Amount, Procedure</p>
+            <strong>Click to upload Claim Dump Excel</strong>
+            <p>The system will auto-match columns even with minor name variations.</p>
         </div>
         <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
     </div>
 
     <div id="mainDashboard">
         <div class="control-panel">
-            <div style="flex-grow: 1;"><strong>Data Active:</strong> <span id="activeFileName">file.xlsx</span></div>
-            <input type="text" id="hospitalSearch" placeholder="Enter Rohini Code or Hospital ID...">
-            <button class="btn-analyze" onclick="performAnalysis()">Analyze Provider</button>
-            <button style="background:#636e72; color:white;" class="btn-analyze" onclick="location.reload()">Reset</button>
+            <input type="text" id="hospitalSearch" placeholder="Enter Rohini ID...">
+            <button class="btn btn-analyze" onclick="performAnalysis()">Analyze</button>
+            <button class="btn btn-pdf" onclick="exportToPDF()">Export to PDF</button>
+            <button class="btn" style="background:#636e72; color:white;" onclick="location.reload()">Reset</button>
         </div>
 
-        <div class="hospital-profile">
-            <div class="profile-card"><span>Hospital Name</span><strong id="pName">-</strong></div>
-            <div class="profile-card"><span>Rohini Code</span><strong id="pRohini">-</strong></div>
-            <div class="profile-card"><span>System ID</span><strong id="pId">-</strong></div>
-            <div class="profile-card"><span>Negotiated Discount</span><strong id="pDisc">-</strong></div>
-        </div>
+        <div id="pdf-report">
+            <div id="pdf-content">
+                <div class="hospital-profile">
+                    <div class="profile-card"><span>Hospital Name</span><strong id="pName">-</strong></div>
+                    <div class="profile-card"><span>Rohini Code</span><strong id="pRohini">-</strong></div>
+                    <div class="profile-card"><span>System ID</span><strong id="pId">-</strong></div>
+                    <div class="profile-card"><span>Discount</span><strong id="pDisc">-</strong></div>
+                </div>
 
-        <div class="card" style="margin-bottom: 25px;">
-            <h3>3-Year Business Figures</h3>
-            <table>
-                <thead id="bizHead"><tr><th>Metric</th></tr></thead>
-                <tbody id="bizBody">
-                    <tr id="rowVal"><td>Total Claim Value</td></tr>
-                    <tr id="rowCount"><td>Total Claim Count</td></tr>
-                    <tr id="rowAcs"><td>Average Claim Size (ACS)</td></tr>
-                </tbody>
-            </table>
-        </div>
+                <div class="card">
+                    <h3>3-Year Business Summary</h3>
+                    <table>
+                        <thead id="bizHead"><tr><th>Metric</th></tr></thead>
+                        <tbody id="bizBody">
+                            <tr id="rowVal"><td>Total Claim Value</td></tr>
+                            <tr id="rowCount"><td>Total Claim Count</td></tr>
+                            <tr id="rowAcs"><td>Avg Claim Size (ACS)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        <div class="stats-grid">
-            <div class="card">
-                <h3>ACS Trend (Line Chart)</h3>
-                <canvas id="trendChart" height="250"></canvas>
-            </div>
-            <div class="card">
-                <h3>Top 10 Utilized Procedures</h3>
-                <table id="procTable">
-                    <thead id="procHead"><tr><th>Procedure</th><th>Vol</th></tr></thead>
-                    <tbody id="procBody"></tbody>
-                </table>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card">
+                        <h3>ACS Trend</h3>
+                        <canvas id="trendChart" height="200"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Top 10 Procedures</h3>
+                        <table id="procTable">
+                            <thead id="procHead"><tr><th>Procedure</th><th>Vol</th></tr></thead>
+                            <tbody id="procBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -97,90 +100,105 @@
     let rawData = null;
     let chartInstance = null;
 
-    // File Upload Handler
     document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
-            rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            rawData = XLSX.utils.sheet_to_json(firstSheet);
             
-            // Switch UI
             document.getElementById('uploadScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
-            document.getElementById('activeFileName').innerText = file.name;
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(e.target.files[0]);
     });
 
+    // Helper to find column names even if they have spaces or different cases
+    function getVal(row, possibleNames) {
+        const keys = Object.keys(row);
+        for (let name of possibleNames) {
+            let found = keys.find(k => k.toLowerCase().replace(/\s/g, '') === name.toLowerCase().replace(/\s/g, ''));
+            if (found) return row[found];
+        }
+        return null;
+    }
+
     function performAnalysis() {
-        const searchId = document.getElementById('hospitalSearch').value.trim();
-        if(!searchId) return alert("Please enter a Hospital/Rohini ID.");
+        const searchInput = document.getElementById('hospitalSearch').value.trim().toLowerCase();
+        if(!searchInput) return alert("Please enter a Rohini ID.");
 
-        const filtered = rawData.filter(r => String(r.ID) === searchId || String(r.RohiniID) === searchId);
-        if(filtered.length === 0) return alert("No matching records found for this ID.");
-
-        // Profile Update
-        const meta = filtered[0];
-        document.getElementById('pName').innerText = meta.HospitalName || 'N/A';
-        document.getElementById('pRohini').innerText = meta.RohiniID || 'N/A';
-        document.getElementById('pId').innerText = meta.ID || 'N/A';
-        document.getElementById('pDisc').innerText = (meta.Discount || 0) + "%";
-
-        // Financial Math
-        const years = [...new Set(filtered.map(r => r.Year))].sort().slice(-3);
-        const stats = years.map(y => {
-            const yrSet = filtered.filter(r => r.Year === y);
-            const sum = yrSet.reduce((a, b) => a + (parseFloat(b.Amount) || 0), 0);
-            return { year: y, sum: sum, count: yrSet.length, acs: sum/yrSet.length };
+        const filtered = rawData.filter(r => {
+            const rohiniValue = String(getVal(r, ['RohiniID', 'Rohini Code', 'Rohini']) || "").toLowerCase().trim();
+            const idValue = String(getVal(r, ['ID', 'HospitalID', 'HospID']) || "").toLowerCase().trim();
+            return rohiniValue === searchInput || idValue === searchInput;
         });
 
-        // Business Table Update
+        if (filtered.length === 0) return alert("No records found for ID: " + searchInput);
+
+        const meta = filtered[0];
+        document.getElementById('pName').innerText = getVal(meta, ['HospitalName', 'Name', 'Hospital']) || 'N/A';
+        document.getElementById('pRohini').innerText = getVal(meta, ['RohiniID', 'Rohini Code']) || 'N/A';
+        document.getElementById('pId').innerText = getVal(meta, ['ID', 'HospitalID']) || 'N/A';
+        document.getElementById('pDisc').innerText = (getVal(meta, ['Discount']) || 0) + "%";
+
+        const years = [...new Set(filtered.map(r => getVal(r, ['Year'])))].sort().slice(-3);
+        const stats = years.map(y => {
+            const yrSet = filtered.filter(r => getVal(r, ['Year']) == y);
+            const sum = yrSet.reduce((a, b) => a + (parseFloat(getVal(b, ['Amount'])) || 0), 0);
+            return { year: y, sum, count: yrSet.length, acs: sum/yrSet.length };
+        });
+
+        // Update Tables & Chart (using logic from previous iterations)
+        updateUI(years, stats, filtered);
+    }
+
+    function updateUI(years, stats, filtered) {
         document.getElementById('bizHead').innerHTML = '<tr><th>Metric</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
         document.getElementById('rowVal').innerHTML = `<td>Total Claim Value</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
         document.getElementById('rowCount').innerHTML = `<td>Total Claim Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
         document.getElementById('rowAcs').innerHTML = `<td>Avg Claim Size</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined, {maximumFractionDigits:0})}</td>`).join('');
 
-        // Chart Update
         const ctx = document.getElementById('trendChart').getContext('2d');
         if(chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: years,
-                datasets: [{ label: 'ACS (₹)', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.3, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.1)' }]
-            }
+            data: { labels: years, datasets: [{ label: 'ACS (₹)', data: stats.map(s => s.acs), borderColor: '#0984e3', fill: true, backgroundColor: 'rgba(9, 132, 227, 0.1)' }] }
         });
 
-        // Procedure Analysis
         const pMap = {};
         filtered.forEach(r => {
-            if(!pMap[r.Procedure]) pMap[r.Procedure] = { name: r.Procedure, count: 0, yrAcs: {} };
-            pMap[r.Procedure].count++;
+            const pName = getVal(r, ['Procedure', 'ProcedureName']);
+            if(!pMap[pName]) pMap[pName] = { name: pName, count: 0, yrAcs: {} };
+            pMap[pName].count++;
         });
 
         const top10 = Object.values(pMap).sort((a,b) => b.count - a.count).slice(0, 10);
         top10.forEach(p => {
             years.forEach(y => {
-                const matches = filtered.filter(f => f.Procedure === p.name && f.Year === y);
-                p.yrAcs[y] = matches.length > 0 ? (matches.reduce((a,b)=>a+(parseFloat(b.Amount)||0),0)/matches.length) : 0;
+                const matches = filtered.filter(f => getVal(f, ['Procedure', 'ProcedureName']) === p.name && getVal(f, ['Year']) == y);
+                p.yrAcs[y] = matches.length > 0 ? (matches.reduce((a,b)=>a+(parseFloat(getVal(b, ['Amount']))||0),0)/matches.length) : 0;
             });
         });
 
         document.getElementById('procHead').innerHTML = `<tr><th>Procedure</th><th>Vol</th>` + years.map(y => `<th>${y} ACS</th>`).join('') + '</tr>';
         document.getElementById('procBody').innerHTML = top10.map(p => `
-            <tr>
-                <td><strong>${p.name}</strong></td>
-                <td>${p.count}</td>
-                ${years.map(y => `<td>${p.yrAcs[y] > 0 ? '₹'+p.yrAcs[y].toLocaleString(undefined, {maximumFractionDigits:0}) : '-'}</td>`).join('')}
-            </tr>
+            <tr><td>${p.name}</td><td>${p.count}</td>${years.map(y => `<td>${p.yrAcs[y] > 0 ? '₹'+p.yrAcs[y].toLocaleString(undefined, {maximumFractionDigits:0}) : '-'}</td>`).join('')}</tr>
         `).join('');
     }
-</script>
 
+    function exportToPDF() {
+        const element = document.getElementById('pdf-report');
+        const hospName = document.getElementById('pName').innerText;
+        const opt = {
+            margin: 0.5,
+            filename: `Hospital_Analysis_${hospName}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
 </body>
 </html>
-
