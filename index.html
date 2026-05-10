@@ -13,13 +13,10 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 15px; font-size: 13px; }
         .container { max-width: 1200px; margin: auto; }
         
-        /* Step 1: Upload Screen with Icon */
-        #uploadScreen { background: white; padding: 60px 40px; border-radius: 15px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-top: 50px; }
+        #uploadScreen { background: white; padding: 60px 40px; border-radius: 15px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-top: 50px; display: block; }
         .hospital-icon { width: 80px; height: 80px; fill: var(--primary); margin-bottom: 20px; }
         .drop-zone { border: 2px dashed var(--secondary); padding: 40px; border-radius: 12px; cursor: pointer; background: #f0fdfc; transition: 0.3s; }
-        .drop-zone:hover { background: #e6fffa; }
-
-        /* Step 2: Dashboard Layout */
+        
         #mainDashboard { display: none; }
         .no-print { background: var(--dark); color: white; padding: 15px; border-radius: 10px; display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
         
@@ -36,23 +33,18 @@
         td { padding: 6px; border-bottom: 1px solid #eee; }
         
         .chart-container { position: relative; height: 200px; width: 100%; }
-        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="uploadScreen">
-        <svg class="hospital-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/>
-        </svg>
+        <svg class="hospital-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
         <h1>Medical Claims Audit Portal</h1>
-        <p style="color: #636e72; margin-bottom: 30px;">Upload your claim dump to begin incurred amount analysis & ACS tracking.</p>
-        
+        <p>Upload your Excel file to begin.</p>
         <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-            <strong>Click to upload Claim Excel (.xlsx)</strong>
-            <p style="font-size: 0.85rem; color: #00b894;">Supports Rohini ID, Incurred Amount, and Diagnosis auto-matching</p>
+            <strong>Click to select Excel File (.xlsx)</strong>
         </div>
         <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
     </div>
@@ -60,43 +52,34 @@
     <div id="mainDashboard">
         <div class="no-print">
             <input type="text" id="hospitalSearch" placeholder="Search Rohini ID..." style="padding:8px; width:220px; border-radius:4px; border:none;">
-            <button class="btn" style="background:var(--secondary);" onclick="performAnalysis()">Analyze Incurred Data</button>
-            <button class="btn" style="background:var(--danger); color:white;" onclick="exportToPDF()">Export Single Page PDF</button>
+            <button class="btn" style="background:var(--secondary);" onclick="performAnalysis()">Analyze</button>
+            <button class="btn" style="background:var(--danger); color:white;" onclick="exportToPDF()">Export PDF</button>
             <button class="btn" style="background:#636e72; color:white; margin-left: auto;" onclick="location.reload()">New Upload</button>
         </div>
 
         <div id="pdf-report">
             <div class="hospital-profile">
-                <div class="profile-card"><span>Provider Name</span><strong id="pName">-</strong></div>
-                <div class="profile-card"><span>Rohini Code</span><strong id="pRohini">-</strong></div>
+                <div class="profile-card"><span>Provider</span><strong id="pName">-</strong></div>
+                <div class="profile-card"><span>Rohini</span><strong id="pRohini">-</strong></div>
                 <div class="profile-card"><span>Top Diagnosis</span><strong id="pDiag">-</strong></div>
                 <div class="profile-card"><span>Discount</span><strong id="pDisc">-</strong></div>
             </div>
 
             <div class="card">
-                <h3>Financial Summary (3-Year Incurred)</h3>
+                <h3>Financial Summary (Incurred)</h3>
                 <table>
                     <thead id="bizHead"><tr><th>Metric</th></tr></thead>
                     <tbody id="bizBody">
-                        <tr id="rowVal"><td>Total Incurred Amount</td></tr>
-                        <tr id="rowCount"><td>Total Claims Count</td></tr>
-                        <tr id="rowAcs"><td>Average Claim Size (ACS)</td></tr>
+                        <tr id="rowVal"><td>Total Incurred</td></tr>
+                        <tr id="rowCount"><td>Claims Count</td></tr>
+                        <tr id="rowAcs"><td>Avg Claim Size (ACS)</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="report-grid">
-                <div class="card">
-                    <h3>Incurred ACS Trend</h3>
-                    <div class="chart-container"><canvas id="trendChart"></canvas></div>
-                </div>
-                <div class="card">
-                    <h3>Procedure-wise Breakdown</h3>
-                    <table id="procTable">
-                        <thead id="procHead"><tr><th>Procedure</th><th>Vol</th></tr></thead>
-                        <tbody id="procBody"></tbody>
-                    </table>
-                </div>
+                <div class="card"><h3>ACS Trend</h3><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+                <div class="card"><h3>Procedures</h3><table id="procTable"><thead id="procHead"><tr><th>Proc</th><th>Vol</th></tr></thead><tbody id="procBody"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -106,16 +89,32 @@
     let rawData = null;
     let chartInstance = null;
 
+    // RECTIFIED: Explicit UI switching logic
     document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            document.getElementById('uploadScreen').style.display = 'none';
-            document.getElementById('mainDashboard').style.display = 'block';
+        reader.onload = function(event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0];
+                rawData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                if (rawData && rawData.length > 0) {
+                    // FORCE UI SWITCH
+                    document.getElementById('uploadScreen').style.display = 'none';
+                    document.getElementById('mainDashboard').style.display = 'block';
+                    alert("Data Loaded Successfully! Enter Rohini ID to begin.");
+                } else {
+                    alert("The Excel file seems to be empty.");
+                }
+            } catch (err) {
+                alert("Error reading Excel: " + err.message);
+            }
         };
-        reader.readAsArrayBuffer(e.target.files[0]);
+        reader.readAsArrayBuffer(file);
     });
 
     function fuzzyGet(row, targets) {
@@ -129,7 +128,7 @@
 
     function performAnalysis() {
         const input = document.getElementById('hospitalSearch').value.trim().toLowerCase();
-        if(!input) return;
+        if(!input) return alert("Please enter a Rohini ID.");
 
         const filtered = rawData.filter(r => {
             const rID = String(fuzzyGet(r, ['rohini', 'rohiniid']) || "").toLowerCase().trim();
@@ -137,7 +136,7 @@
             return rID === input || hID === input;
         });
 
-        if (filtered.length === 0) return alert("Provider ID not found.");
+        if (filtered.length === 0) return alert("No records found for this ID.");
 
         const meta = filtered[0];
         document.getElementById('pName').innerText = fuzzyGet(meta, ['hospitalname', 'name']) || 'N/A';
@@ -164,4 +163,43 @@
     function renderAnalysis(years, stats, filtered) {
         document.getElementById('bizHead').innerHTML = '<tr><th>Metric</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
         document.getElementById('rowVal').innerHTML = `<td>Total Incurred</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
-        document.getElementById('rowCount').innerHTML = `<td>Claims Count</td>` + stats.map(s => `<td>
+        document.getElementById('rowCount').innerHTML = `<td>Claims Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
+        document.getElementById('rowAcs').innerHTML = `<td>Incurred ACS</td>` + stats.map(s => `<td>₹${s.acs.toFixed(0)}</td>`).join('');
+
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                labels: years, 
+                datasets: [{ label: 'ACS (₹)', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.3, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.1)' }] 
+            },
+            options: { maintainAspectRatio: false }
+        });
+
+        const pMap = {};
+        filtered.forEach(r => {
+            const proc = fuzzyGet(r, ['procedure', 'treatment']);
+            if(!pMap[proc]) pMap[proc] = { count: 0 };
+            pMap[proc].count++;
+        });
+
+        const sortedProcs = Object.entries(pMap).sort((a,b)=>b[1].count - a[1].count).slice(0, 10);
+        document.getElementById('procHead').innerHTML = `<tr><th>Procedure</th><th>Vol</th>` + years.map(y => `<th>${y} ACS</th>`).join('') + '</tr>';
+        document.getElementById('procBody').innerHTML = sortedProcs.map(([name, data]) => {
+            const yCells = years.map(y => {
+                const matches = filtered.filter(f => fuzzyGet(f, ['procedure']) === name && fuzzyGet(f, ['year']) == y);
+                const avg = matches.length ? (matches.reduce((a,b)=>a+parseFloat(fuzzyGet(b,['incurred', 'amount'])),0)/matches.length).toFixed(0) : '-';
+                return `<td>${avg !== '-' ? '₹'+avg : '-'}</td>`;
+            }).join('');
+            return `<tr><td>${name}</td><td>${data.count}</td>${yCells}</tr>`;
+        }).join('');
+    }
+
+    function exportToPDF() {
+        const element = document.getElementById('pdf-report');
+        html2pdf().set({ margin: 0.3, filename: 'Analysis.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save();
+    }
+</script>
+</body>
+</html>
