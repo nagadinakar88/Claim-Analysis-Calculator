@@ -244,5 +244,45 @@
         document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
 
         // Line Chart
-        const ctx = document.getElementById('trend
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels: years, datasets: [{ label: 'Consolidated ACS (₹)', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.2, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.05)' }] },
+            options: { maintainAspectRatio: false }
+        });
+
+        // Procedures
+        const pMap = {};
+        filtered.forEach(r => {
+            const p = fuzzyGet(r, ['procedure', 'treatment']);
+            if(!pMap[p]) pMap[p] = { count: 0 };
+            pMap[p].count++;
+        });
+        const sorted = Object.entries(pMap).sort((a,b)=>b[1].count - a[1].count).slice(0, 10);
+        document.getElementById('procHead').innerHTML = `<tr><th>Procedure</th><th>Vol</th>` + years.map(y => `<th>${y} ACS</th>`).join('') + '</tr>';
+        document.getElementById('procBody').innerHTML = sorted.map(([name, data]) => {
+            const yCells = years.map(y => {
+                const matches = filtered.filter(f => fuzzyGet(f, ['procedure']) === name && fuzzyGet(f, ['year']) == y);
+                const avg = matches.length ? (matches.reduce((a,b)=>a+parseFloat(fuzzyGet(b,['incurred', 'amount'])),0)/matches.length).toFixed(0) : '-';
+                return `<td>${avg !== '-' ? '₹'+parseFloat(avg).toLocaleString() : '-'}</td>`;
+            }).join('');
+            return `<tr><td>${name}</td><td>${data.count}</td>${yCells}</tr>`;
+        }).join('');
+    }
+
+    function exportToPDF() {
+        const element = document.getElementById('pdf-report');
+        const hName = document.getElementById('pName').innerText;
+        html2pdf().set({
+            margin: 0.2,
+            filename: `Claims_Audit_Report_${hName}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2 },
+            jsPDF: { format: 'a4', orientation: 'landscape' }
+        }).from(element).save();
+    }
+</script>
+</body>
+</html>
 
