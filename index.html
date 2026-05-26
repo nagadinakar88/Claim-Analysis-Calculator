@@ -180,5 +180,126 @@
         document.getElementById('pDisc').innerText = (fuzzyGet(meta, ['discount']) || 0) + "%";
 
         // Extract Diagnostic Elements
-        const diags =
+        const diags = {};
+        filtered.forEach(r => {
+            const d = fuzzyGet(r, ['diagnosis', 'disease', 'icd']) || 'Other Conditions';
+            diags[d] = (diags[d] || 0) + 1;
+        });
+        document.getElementById('pDiag').innerText = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
+
+        // Process Timeline Sets
+        const years = [...new Set(filtered.map(r => fuzzyGet(r, ['year'])))].filter(Boolean).sort().slice(-3);
+        if(years.length === 0) { years.push("Data"); }
+
+        const stats = years.map(y => {
+            const yrSet = filtered.filter(r => fuzzyGet(r, ['year']) == y || years.length === 1);
+            const sumIncurred = yrSet.reduce((a, b) => a + (parseFloat(fuzzyGet(b, ['incurred', 'approved', 'paid', 'amount'])) || 0), 0);
+            return { year: y, sum: sumIncurred, count: yrSet.length, acs: yrSet.length > 0 ? (sumIncurred / yrSet.length) : 0 };
+        });
+
+        const typeStats = {};
+        years.forEach(y => {
+            typeStats[y] = { cashless: { sum: 0, count: 0 }, reimbursement: { sum: 0, count: 0 } };
+            const yrSet = filtered.filter(r => fuzzyGet(r, ['year']) == y || years.length === 1);
+            
+            yrSet.forEach(r => {
+                const amt = parseFloat(fuzzyGet(r, ['incurred', 'approved', 'paid', 'amount'])) || 0;
+                const type = String(fuzzyGet(r, ['type', 'claimtype', 'mode']) || "").toLowerCase();
+                
+                if (type.includes('reim') || type.includes('re-im') || type.includes('reimb')) {
+                    typeStats[y].reimbursement.sum += amt;
+                    typeStats[y].reimbursement.count++;
+                } else {
+                    typeStats[y].cashless.sum += amt;
+                    typeStats[y].cashless.count++;
+                }
+            });
+        });
+
+        renderVisualizationElements(years, stats, typeStats, filtered);
+    }
+
+    function renderVisualizationElements(years, stats, typeStats, filtered) {
+        // Consolidated
+        document.getElementById('bizHead').innerHTML = '<tr><th>Metric Elements</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
+        document.getElementById('rowVal').innerHTML = `<td>Total Incurred</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
+        document.getElementById('rowCount').innerHTML = `<td>Claims Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
+        document.getElementById('rowAcs').innerHTML = `<td>Incurred ACS</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`).join('');
+
+        // Matrix Grid Headers
+        let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Modality Metrics</th>`;
+        let subHeaderHtml = '';
+        years.forEach(y => {
+            typeHeaderHtml += `<th colspan="3" style="border-bottom: 1px solid #cbd5e0;">FY ${y}</th>`;
+            subHeaderHtml += `<th>Claims</th><th>Incurred</th><th>ACS</th>`;
+        });
+        document.getElementById('typeHeaderRow').innerHTML = typeHeaderHtml;
+        document.getElementById('typeSubHeaderRow').innerHTML = subHeaderHtml;
+
+        // Matrix Row Building
+        const segments = ['Cashless', 'Reimbursement'];
+        let typeBodyHtml = '';
+        segments.forEach(seg => {
+            const key = seg.toLowerCase();
+            let rVol = `<tr><td class="left-align">${seg} - Volume</td>`;
+            let rAmt = `<tr><td class="left-align">${seg} - Incurred Total</td>`;
+            let rAcs = `<tr><td class="left-align">${seg} - Calculated ACS</td>`;
+            
+            years.forEach(y => {
+                const c = typeStats[y][key].count;
+                const s = typeStats[y][key].sum;
+                const a = c > 0 ? (s / c) : 0;
+                
+                rVol += `<td>${c}</td>`;
+                rAmt += `<td>₹${s.toLocaleString()}</td>`;
+                rAcs += `<td>₹${a.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`;
+            });
+            typeBodyHtml += rVol + '</tr>' + rAmt + '</tr>' + rAcs + '</tr>';
+        });
+        document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
+
+        // Render Analytics Line Graph
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels: years, datasets: [{ label: 'Global Incurred ACS', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.15, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.04)' }] },
+            options: { maintainAspectRatio: false }
+        });
+
+        // Procedure Breakdown Analysis Top 10 List
+        const proceduresMap = {};
+        filtered.forEach(r => {
+            const procName = fuzzyGet(r, ['procedure', 'treatment', 'proceduredescription']) || 'Unmapped Treatments';
+            if(!proceduresMap[procName]) proceduresMap[procName] = { globalCount: 0 };
+            proceduresMap[procName].globalCount++;
+        });
+        
+        const sortedProcedures = Object.entries(proceduresMap).sort((a,b)=>b[1].globalCount - a[1].globalCount).slice(0, 10);
+        document.getElementById('procHead').innerHTML = `<tr><th>Procedure Description</th><th>Volume</th>` + years.map(y => `<th>${y} ACS</th>`).join('') + '</tr>';
+        
+        document.getElementById('procBody').innerHTML = sortedProcedures.map(([name, data]) => {
+            const yearCells = years.map(y => {
+                const matches = filtered.filter(f => (fuzzyGet(f, ['procedure', 'treatment']) || 'Unmapped Treatments') === name && (fuzzyGet(f, ['year']) == y || years.length === 1));
+                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(fuzzyGet(rowObj,['incurred', 'amount'])), 0) / matches.length) : 0;
+                return `<td>${averageCalculated > 0 ? '₹' + averageCalculated.toLocaleString(undefined,{maximumFractionDigits:0}) : '-'}</td>`;
+            }).join('');
+            return `<tr><td><strong>${name}</strong></td><td>${data.globalCount}</td>${yearCells}</tr>`;
+        }).join('');
+    }
+
+    function exportToPDF() {
+        const reportElement = document.getElementById('pdf-report');
+        const entityName = document.getElementById('pName').innerText.replace(/[^a-zA-Z0-9]/g, '_');
+        html2pdf().set({
+            margin: 0.25,
+            filename: `Incurred_Audit_Report_${entityName}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2, logging: false },
+            jsPDF: { format: 'a4', orientation: 'landscape' }
+        }).from(reportElement).save();
+    }
+</script>
+</body>
+</html>
 
