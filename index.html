@@ -10,7 +10,7 @@
     
     <style>
         :root { --primary: #0984e3; --secondary: #00cec9; --dark: #2d3436; --light: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 10px; }
         
         /* Step 1: Upload Container */
         #uploadScreen { max-width: 600px; margin: 100px auto; background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -18,21 +18,27 @@
         .upload-btn { background: var(--primary); color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
         #statusMsg { margin-top: 15px; font-weight: bold; color: #d63031; }
 
-        /* Step 2: Dashboard (Hidden by default) */
-        #mainDashboard { display: none; max-width: 1200px; margin: auto; }
-        .top-bar { background: var(--dark); color: white; padding: 15px; border-radius: 10px; display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+        /* Step 2: Dashboard */
+        #mainDashboard { display: none; max-width: 1250px; margin: auto; }
+        .top-bar { background: var(--dark); color: white; padding: 12px; border-radius: 10px; display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
         
-        #pdf-report { background: white; padding: 20px; border-radius: 10px; border: 1px solid #ddd; }
-        .hospital-profile { background: var(--primary); color: white; padding: 15px; border-radius: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        #pdf-report { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+        .hospital-profile { background: var(--primary); color: white; padding: 12px; border-radius: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
         .profile-card span { display: block; font-size: 10px; text-transform: uppercase; opacity: 0.8; }
         
-        .report-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
-        .card { border: 1px solid #eee; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #f8f9fa; padding: 6px; text-align: left; border-bottom: 2px solid var(--primary); }
-        td { padding: 6px; border-bottom: 1px solid #eee; }
+        .report-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px; margin-top: 12px; }
+        .card { border: 1px solid #eee; padding: 12px; border-radius: 8px; background: #fff; }
+        h3 { margin: 0 0 8px 0; font-size: 14px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 4px; }
         
-        .chart-container { position: relative; height: 200px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 5px; }
+        th { background: #f8f9fa; padding: 5px; text-align: left; border-bottom: 2px solid var(--primary); }
+        td { padding: 5px; border-bottom: 1px solid #eee; }
+        
+        .type-table th { background: #eef2f7; text-align: center; }
+        .type-table td { text-align: center; }
+        .type-table .left-align { text-align: left; font-weight: bold; }
+        
+        .chart-container { position: relative; height: 160px; width: 100%; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
@@ -42,7 +48,7 @@
     <div id="uploadScreen">
         <svg class="hospital-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
         <h1>Hospital Audit Dashboard</h1>
-        <p>Please select your Claim Dump file to unlock the calculator.</p>
+        <p>Select your Claim Dump file to unlock the comprehensive analytics summary.</p>
         <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
         <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Select Excel File</button>
         <div id="statusMsg"></div>
@@ -50,7 +56,7 @@
 
     <div id="mainDashboard">
         <div class="top-bar">
-            <input type="text" id="hospitalSearch" placeholder="Enter Rohini Code..." style="padding:10px; width:250px; border-radius:5px; border:none;">
+            <input type="text" id="hospitalSearch" placeholder="Enter Rohini Code..." style="padding:8px; width:250px; border-radius:5px; border:none;">
             <button class="btn" style="background:var(--secondary);" onclick="performAnalysis()">Analyze Incurred Data</button>
             <button class="btn" style="background:#e17055; color:white;" onclick="exportToPDF()">Export PDF</button>
             <button class="btn" style="background:#636e72; color:white; margin-left:auto;" onclick="location.reload()">Reset</button>
@@ -64,8 +70,8 @@
                 <div class="profile-card"><span>Discount</span><strong id="pDisc">-</strong></div>
             </div>
 
-            <div class="card">
-                <h3>Financial Summary (Based on Incurred Amount)</h3>
+            <div class="card" style="margin-bottom: 12px;">
+                <h3>Financial Summary (Consolidated Incurred Basis)</h3>
                 <table id="bizTable">
                     <thead id="bizHead"><tr><th>Metric</th></tr></thead>
                     <tbody id="bizBody">
@@ -76,13 +82,27 @@
                 </table>
             </div>
 
+            <div class="card">
+                <h3>Claim Type Split: Cashless vs Reimbursement</h3>
+                <table class="type-table">
+                    <thead>
+                        <tr id="typeHeaderRow">
+                            <th rowspan="2" style="text-align:left; width: 16%;">Claim Type & Metrics</th>
+                        </tr>
+                        <tr id="typeSubHeaderRow"></tr>
+                    </thead>
+                    <tbody id="typeTableBody">
+                        </tbody>
+                </table>
+            </div>
+
             <div class="report-grid">
                 <div class="card">
                     <h3>Incurred ACS Trend</h3>
                     <div class="chart-container"><canvas id="trendChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <h3>Top 10 Procedures</h3>
+                    <h3>Top 10 Procedures & Historic ACS</h3>
                     <table id="procTable">
                         <thead id="procHead"><tr><th>Procedure</th><th>Vol</th></tr></thead>
                         <tbody id="procBody"></tbody>
@@ -97,48 +117,27 @@
     let rawData = null;
     let chartInstance = null;
 
-    // FILE LOADING LOGIC
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         document.getElementById('statusMsg').innerText = "Reading file... Please wait.";
-        document.getElementById('statusMsg').style.color = "orange";
-
         const reader = new FileReader();
-        
         reader.onload = function(event) {
             try {
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                rawData = XLSX.utils.sheet_to_json(worksheet);
-
+                rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 if (rawData && rawData.length > 0) {
-                    console.log("Data loaded:", rawData.length, "rows");
-                    // SWITCH SCREENS
                     document.getElementById('uploadScreen').style.display = 'none';
                     document.getElementById('mainDashboard').style.display = 'block';
-                } else {
-                    throw new Error("Excel file is empty or formatted incorrectly.");
-                }
+                } else { throw new Error("Excel file is empty."); }
             } catch (err) {
-                console.error(err);
                 document.getElementById('statusMsg').innerText = "Error: " + err.message;
-                document.getElementById('statusMsg').style.color = "red";
             }
         };
-
-        reader.onerror = function() {
-            document.getElementById('statusMsg').innerText = "Failed to read file.";
-        };
-
         reader.readAsArrayBuffer(file);
     });
 
-    // FUZZY COLUMN MATCHER
     function fuzzyGet(row, targets) {
         const keys = Object.keys(row);
         for (let t of targets) {
@@ -160,80 +159,90 @@
 
         if (filtered.length === 0) return alert("ID not found in this data.");
 
-        // Metadata
         const meta = filtered[0];
         document.getElementById('pName').innerText = fuzzyGet(meta, ['hospitalname', 'name']) || 'N/A';
         document.getElementById('pRohini').innerText = fuzzyGet(meta, ['rohini', 'rohiniid']) || 'N/A';
         document.getElementById('pDisc').innerText = (fuzzyGet(meta, ['discount']) || 0) + "%";
 
-        // Diagnosis
         const diags = {};
         filtered.forEach(r => {
             const d = fuzzyGet(r, ['diagnosis', 'disease', 'icd']) || 'Unknown';
             diags[d] = (diags[d] || 0) + 1;
         });
-        const topDiag = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
-        document.getElementById('pDiag').innerText = topDiag;
+        document.getElementById('pDiag').innerText = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
 
-        // Statistics
         const years = [...new Set(filtered.map(r => fuzzyGet(r, ['year'])))].sort().slice(-3);
+        
+        // Compute Consolidated Stats
         const stats = years.map(y => {
             const yrSet = filtered.filter(r => fuzzyGet(r, ['year']) == y);
             const sumIncurred = yrSet.reduce((a, b) => a + (parseFloat(fuzzyGet(b, ['incurred', 'approved', 'paid', 'amount'])) || 0), 0);
             return { year: y, sum: sumIncurred, count: yrSet.length, acs: sumIncurred / yrSet.length };
         });
 
-        renderCharts(years, stats, filtered);
+        // Compute Split Stats (Cashless vs Reimbursement)
+        const typeStats = {};
+        years.forEach(y => {
+            typeStats[y] = { cashless: { sum: 0, count: 0 }, reimbursement: { sum: 0, count: 0 } };
+            const yrSet = filtered.filter(r => fuzzyGet(r, ['year']) == y);
+            
+            yrSet.forEach(r => {
+                const amt = parseFloat(fuzzyGet(r, ['incurred', 'approved', 'paid', 'amount'])) || 0;
+                const type = String(fuzzyGet(r, ['type', 'claimtype', 'mode']) || "").toLowerCase();
+                
+                if (type.includes('reim') || type.includes('re-im')) {
+                    typeStats[y].reimbursement.sum += amt;
+                    typeStats[y].reimbursement.count++;
+                } else {
+                    // Default fallback to Cashless if not matching reimbursement variants
+                    typeStats[y].cashless.sum += amt;
+                    typeStats[y].cashless.count++;
+                }
+            });
+        });
+
+        renderChartsAndSplits(years, stats, typeStats, filtered);
     }
 
-    function renderCharts(years, stats, filtered) {
-        // Business Table
+    function renderChartsAndSplits(years, stats, typeStats, filtered) {
+        // Consolidated Table UI
         document.getElementById('bizHead').innerHTML = '<tr><th>Metric</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
         document.getElementById('rowVal').innerHTML = `<td>Total Incurred</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
         document.getElementById('rowCount').innerHTML = `<td>Claims Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
         document.getElementById('rowAcs').innerHTML = `<td>Incurred ACS</td>` + stats.map(s => `<td>₹${s.acs.toFixed(0)}</td>`).join('');
 
-        // Chart
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: { 
-                labels: years, 
-                datasets: [{ label: 'ACS (₹)', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.3, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.1)' }] 
-            },
-            options: { maintainAspectRatio: false }
+        // Segmented Table UI Generation
+        let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Claim Type & Metrics</th>`;
+        let subHeaderHtml = '';
+        years.forEach(y => {
+            typeHeaderHtml += `<th colspan="3" style="border-bottom: 1px solid #ddd;">FY ${y}</th>`;
+            subHeaderHtml += `<th>Claims</th><th>Incurred Value</th><th>ACS</th>`;
         });
+        document.getElementById('typeHeaderRow').innerHTML = typeHeaderHtml;
+        document.getElementById('typeSubHeaderRow').innerHTML = subHeaderHtml;
 
-        // Procedures
-        const pMap = {};
-        filtered.forEach(r => {
-            const p = fuzzyGet(r, ['procedure', 'treatment']);
-            if(!pMap[p]) pMap[p] = { count: 0 };
-            pMap[p].count++;
+        const modes = ['Cashless', 'Reimbursement'];
+        let typeBodyHtml = '';
+        modes.forEach(mode => {
+            const key = mode.toLowerCase();
+            let rowCount = `<tr><td class="left-align">${mode} - Volume</td>`;
+            let rowSum = `<tr><td class="left-align">${mode} - Incurred Val</td>`;
+            let rowAcs = `<tr><td class="left-align">${mode} - ACS</td>`;
+            
+            years.forEach(y => {
+                const count = typeStats[y][key].count;
+                const sum = typeStats[y][key].sum;
+                const acs = count > 0 ? (sum / count).toFixed(0) : 0;
+                
+                rowCount += `<td>${count}</td>`;
+                rowSum += `<td>₹${sum.toLocaleString()}</td>`;
+                rowAcs += `<td>₹${parseFloat(acs).toLocaleString()}</td>`;
+            });
+            
+            typeBodyHtml += rowCount + '</tr>' + rowSum + '</tr>' + rowAcs + '</tr>';
         });
-        const sorted = Object.entries(pMap).sort((a,b)=>b[1].count - a[1].count).slice(0,10);
-        document.getElementById('procHead').innerHTML = `<tr><th>Procedure</th><th>Vol</th>` + years.map(y => `<th>${y} ACS</th>`).join('') + '</tr>';
-        document.getElementById('procBody').innerHTML = sorted.map(([name, data]) => {
-            const yCells = years.map(y => {
-                const matches = filtered.filter(f => fuzzyGet(f, ['procedure']) === name && fuzzyGet(f, ['year']) == y);
-                const avg = matches.length ? (matches.reduce((a,b)=>a+parseFloat(fuzzyGet(b,['incurred', 'amount'])),0)/matches.length).toFixed(0) : '-';
-                return `<td>${avg !== '-' ? '₹'+avg : '-'}</td>`;
-            }).join('');
-            return `<tr><td>${name}</td><td>${data.count}</td>${yCells}</tr>`;
-        }).join('');
-    }
+        document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
 
-    function exportToPDF() {
-        const element = document.getElementById('pdf-report');
-        const hName = document.getElementById('pName').innerText;
-        html2pdf().set({
-            margin: 0.3,
-            filename: `Incurred_ACS_${hName}.pdf`,
-            html2canvas: { scale: 2 },
-            jsPDF: { format: 'a4', orientation: 'landscape' }
-        }).from(element).save();
-    }
-</script>
-</body>
-</html>
+        // Line Chart
+        const ctx = document.getElementById('trend
+
