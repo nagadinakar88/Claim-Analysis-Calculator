@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital Analytics Portal</title>
+    <title>Hospital Claim Dump Intelligence</title>
+    <!-- Stable analytical dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -13,21 +14,22 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 10px; margin: 0; }
         .container { max-width: 1250px; margin: auto; padding: 10px; }
         
-        /* Upload Screen Fixed Layout */
+        /* Upload Landing Screen Grid layout */
         #uploadScreen { max-width: 550px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.08); display: block; }
         .hospital-icon { width: 70px; height: 70px; fill: var(--primary); margin-bottom: 15px; }
         .upload-btn { background: var(--primary); color: white; padding: 12px 28px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         #statusMsg { margin-top: 15px; font-weight: bold; color: #636e72; font-size: 0.9rem; }
 
-        /* Main App Interface */
+        /* Portal Dashboard Elements Workspace */
         #mainDashboard { display: none; }
         .top-bar { background: var(--dark); color: white; padding: 12px; border-radius: 8px; display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
-        .search-input { padding: 10px; width: 240px; border-radius: 4px; border: none; font-size: 0.9rem; }
+        .search-input { padding: 10px; width: 260px; border-radius: 4px; border: none; font-size: 0.9rem; }
         
         #pdf-report { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e1e8ed; }
-        .hospital-profile { background: var(--primary); color: white; padding: 12px; border-radius: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-        .profile-card span { display: block; font-size: 10px; text-transform: uppercase; opacity: 0.85; margin-bottom: 2px; }
-        .profile-card strong { font-size: 1.1rem; }
+        /* Adjusted grid layout to exactly accommodate 3 elements elegantly */
+        .hospital-profile { background: var(--primary); color: white; padding: 14px; border-radius: 6px; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 15px; margin-bottom: 15px; }
+        .profile-card span { display: block; font-size: 10px; text-transform: uppercase; opacity: 0.85; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .profile-card strong { font-size: 1.15rem; }
         
         .card { border: 1px solid #e1e8ed; padding: 15px; border-radius: 6px; background: #fff; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--primary); border-bottom: 1px solid #edf2f7; padding-bottom: 6px; }
@@ -48,63 +50,68 @@
 <body>
 
 <div class="container">
+    <!-- STAGE 1: ASYNCHRONOUS SECURE UPLOAD SCREEN -->
     <div id="uploadScreen">
         <svg class="hospital-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
         <h2>Hospital Claims Intelligence</h2>
-        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Select your claim report file. Processing happens locally in your browser.</p>
+        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Select your medical claim dump file to compile Incurred ACS audit views.</p>
         <input type="file" id="fileInput" accept=".xlsx, .xls, .xlsm, .csv" style="display:none">
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose Excel Document</button>
-        <div id="statusMsg">Ready for file selection...</div>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose Claim Dump Document</button>
+        <div id="statusMsg">Ready for calculation engine pipeline...</div>
     </div>
 
+    <!-- STAGE 2: LIVE AUDIT DASHBOARD -->
     <div id="mainDashboard">
         <div class="top-bar">
-            <input type="text" id="hospitalSearch" class="search-input" placeholder="Type Rohini Code / System ID...">
-            <button class="btn" style="background:var(--secondary); color:#2d3436;" onclick="performAnalysis()">Run Analysis</button>
+            <input type="text" id="hospitalSearch" class="search-input" placeholder="Enter Hercules Hosp ID...">
+            <button class="btn" style="background:var(--secondary); color:#2d3436;" onclick="performAnalysis()">Run Incurred Analysis</button>
             <button class="btn" style="background:#e17055; color:white;" onclick="exportToPDF()">Save Single Page PDF</button>
             <button class="btn" style="background:#718096; color:white; margin-left:auto;" onclick="location.reload()">Upload Different File</button>
         </div>
 
         <div id="pdf-report">
+            <!-- RECTIFIED: Trimmed down to exactly 3 distinct headers without elements for Discount -->
             <div class="hospital-profile">
-                <div class="profile-card"><span>Hospital Name</span><strong id="pName">-</strong></div>
-                <div class="profile-card"><span>Rohini Identifier</span><strong id="pRohini">-</strong></div>
-                <div class="profile-card"><span>Primary Diagnosis</span><strong id="pDiag">-</strong></div>
-                <div class="profile-card"><span>Agreed Discount</span><strong id="pDisc">-</strong></div>
+                <div class="profile-card"><span>Provider Facility Name</span><strong id="pName">-</strong></div>
+                <div class="profile-card"><span>Hercules Hospital ID</span><strong id="pRohini">-</strong></div>
+                <div class="profile-card"><span>Top Volume Diagnosis Group</span><strong id="pDiag">-</strong></div>
             </div>
 
+            <!-- Global Consolidated Historical Table Layout Matrix -->
             <div class="card">
-                <h3>Financial Summary Breakdown (Incurred Basis)</h3>
+                <h3>Financial Summary Breakdown (Incurred Amount Analysis)</h3>
                 <table>
-                    <thead id="bizHead"><tr><th>Metric Elements</th></tr></thead>
+                    <thead id="bizHead"><tr><th>Audit Evaluation Elements</th></tr></thead>
                     <tbody id="bizBody">
-                        <tr id="rowVal"><td>Total Incurred Amount</td></tr>
-                        <tr id="rowCount"><td>Total Claims Count</td></tr>
-                        <tr id="rowAcs"><td>Average Claim Size (ACS)</td></tr>
+                        <tr id="rowVal"><td>Total Incurred Value</td></tr>
+                        <tr id="rowCount"><td>Total Claims Vol Count</td></tr>
+                        <tr id="rowAcs"><td>Average Claim Size (Incurred ACS)</td></tr>
                     </tbody>
                 </table>
             </div>
 
+            <!-- Segmented Modal Grid Split: Cashless vs Reimbursement -->
             <div class="card">
-                <h3>Claim Type Segmentation Matrix</h3>
+                <h3>Claim Type Segmentation Matrix (Historical Split)</h3>
                 <table class="type-table">
                     <thead>
-                        <tr id="typeHeaderRow"><th rowspan="2" style="text-align:left; width: 18%; vertical-align: middle;">Modality Metrics</th></tr>
+                        <tr id="typeHeaderRow"><th rowspan="2" style="text-align:left; width: 20%; vertical-align: middle;">Modality Split Metric Metrics</th></tr>
                         <tr id="typeSubHeaderRow"></tr>
                     </thead>
                     <tbody id="typeTableBody"></tbody>
                 </table>
             </div>
 
+            <!-- Bottom Multi-View Grid Components -->
             <div class="report-grid">
                 <div class="card">
                     <h3>Incurred ACS Trend Tracker</h3>
                     <div class="chart-container"><canvas id="trendChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <h3>Top 10 High-Volume Procedures</h3>
+                    <h3>Top 10 High-Volume Treatments Breakdown</h3>
                     <table id="procTable">
-                        <thead id="procHead"><tr><th>Procedure Description</th><th>Volume</th></tr></thead>
+                        <thead id="procHead"><tr><th>Type of Treatment Description</th><th>Volume</th></tr></thead>
                         <tbody id="procBody"></tbody>
                     </table>
                 </div>
@@ -117,17 +124,16 @@
     let rawData = null;
     let chartInstance = null;
 
-    // RECTIFIED: Asynchronous instant screen transitions
+    // Trigger explicit async transition rules immediately on state change
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // INSTANT TRANSITION: Move to dashboard screen immediately so app doesn't lock up
+        // Force viewport change to shield parsing memory allocation overheads
         document.getElementById('uploadScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
         
-        // Render a placeholder notification inside search bar area to tell user it's loading behind the scenes
-        document.getElementById('hospitalSearch').placeholder = "Loading spreadsheet rows... Please wait.";
+        document.getElementById('hospitalSearch').placeholder = "Compiling matrix arrays... Please wait.";
         document.getElementById('hospitalSearch').disabled = true;
 
         const reader = new FileReader();
@@ -135,78 +141,75 @@
             try {
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, {type: 'array', cellDates: true, cellStyles: false});
-                
-                // Fallback architecture to read whichever sheet contains records
                 const targetSheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                // Read sheet objects cleanly
                 rawData = XLSX.utils.sheet_to_json(targetSheet, {defval: ""});
 
                 if (rawData && rawData.length > 0) {
-                    document.getElementById('hospitalSearch').placeholder = "Enter Rohini ID and click Analyze...";
+                    document.getElementById('hospitalSearch').placeholder = "Enter Hercules Hosp ID...";
                     document.getElementById('hospitalSearch').disabled = false;
                 } else {
-                    alert("Switch completed but Excel sheet returned 0 readable data rows.");
+                    alert("Sheet parsing successfully bypass execution but schema holds zero metrics rows.");
                 }
             } catch (err) {
-                alert("File processing failed: " + err.message + ". Please refresh and use standard .xlsx formats.");
+                alert("Fail-safe interception hit: " + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    function fuzzyGet(row, targets) {
-        const keys = Object.keys(row);
-        for (let t of targets) {
-            let found = keys.find(k => k.toLowerCase().replace(/[^a-z]/g, '').includes(t.toLowerCase().replace(/[^a-z]/g, '')));
-            if (found) return row[found];
-        }
-        return null;
+    // Explicit Schema Mapping Methods bound natively to user file dictionary layout
+    function exactExtract(row, exactLabel) {
+        return row[exactLabel] !== undefined ? row[exactLabel] : null;
     }
 
     function performAnalysis() {
         const input = document.getElementById('hospitalSearch').value.trim().toLowerCase();
-        if(!input) return alert("Please specify a valid Rohini Code search query.");
+        if(!input) return alert("Please type a clear targeted Hercules Hospital Identifier search parameter.");
 
+        // Structural schema mapping based strictly on user provided metadata definitions
         const filtered = rawData.filter(r => {
-            const rID = String(fuzzyGet(r, ['rohini', 'rohiniid']) || "").toLowerCase().trim();
-            const hID = String(fuzzyGet(r, ['hospitalid', 'id']) || "").toLowerCase().trim();
-            return rID === input || hID === input;
+            const hID = String(exactExtract(r, 'Herucles Hosp ID') || "").toLowerCase().trim();
+            return hID === input;
         });
 
-        if (filtered.length === 0) return alert("The selected identifier could not be matched against any records in this file dump.");
+        if (filtered.length === 0) return alert("The searched Hercules Hospital ID matches zero data points inside this claim dump tracking records.");
 
-        const meta = filtered[0];
-        document.getElementById('pName').innerText = fuzzyGet(meta, ['hospitalname', 'name', 'hospital']) || 'N/A';
-        document.getElementById('pRohini').innerText = fuzzyGet(meta, ['rohini', 'rohiniid']) || 'N/A';
-        document.getElementById('pDisc').innerText = (fuzzyGet(meta, ['discount']) || 0) + "%";
+        const firstRecord = filtered[0];
+        document.getElementById('pName').innerText = exactExtract(firstRecord, 'Providername') || exactExtract(firstRecord, 'Provider Name') || 'N/A';
+        document.getElementById('pRohini').innerText = exactExtract(firstRecord, 'Herucles Hosp ID') || 'N/A';
 
-        // Extract Diagnostic Elements
+        // Diagnosis Groups Metric Sorting logic
         const diags = {};
         filtered.forEach(r => {
-            const d = fuzzyGet(r, ['diagnosis', 'disease', 'icd']) || 'Other Conditions';
+            const d = exactExtract(r, 'Diagnosis Group') || 'Other Conditions';
             diags[d] = (diags[d] || 0) + 1;
         });
         document.getElementById('pDiag').innerText = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
 
-        // Process Timeline Sets
-        const years = [...new Set(filtered.map(r => fuzzyGet(r, ['year'])))].filter(Boolean).sort().slice(-3);
-        if(years.length === 0) { years.push("Data"); }
+        // Financial Year Dynamic Timeline Generation Pipeline tracking
+        const years = [...new Set(filtered.map(r => exactExtract(r, 'Financial year') || exactExtract(r, 'Financial Year')))].filter(Boolean).sort().slice(-3);
+        if(years.length === 0) { years.push("Dump Analysis Set"); }
 
+        // Compute Consolidated Metrics
         const stats = years.map(y => {
-            const yrSet = filtered.filter(r => fuzzyGet(r, ['year']) == y || years.length === 1);
-            const sumIncurred = yrSet.reduce((a, b) => a + (parseFloat(fuzzyGet(b, ['incurred', 'approved', 'paid', 'amount'])) || 0), 0);
+            const yrSet = filtered.filter(r => exactExtract(r, 'Financial year') == y || exactExtract(r, 'Financial Year') == y || years.length === 1);
+            const sumIncurred = yrSet.reduce((acc, row) => acc + (parseFloat(exactExtract(row, 'Incurred Amount')) || 0), 0);
             return { year: y, sum: sumIncurred, count: yrSet.length, acs: yrSet.length > 0 ? (sumIncurred / yrSet.length) : 0 };
         });
 
+        // Compute Multi-Category Treatment Segmentation Array splits
         const typeStats = {};
         years.forEach(y => {
             typeStats[y] = { cashless: { sum: 0, count: 0 }, reimbursement: { sum: 0, count: 0 } };
-            const yrSet = filtered.filter(r => fuzzyGet(r, ['year']) == y || years.length === 1);
+            const yrSet = filtered.filter(r => exactExtract(r, 'Financial year') == y || exactExtract(r, 'Financial Year') == y || years.length === 1);
             
             yrSet.forEach(r => {
-                const amt = parseFloat(fuzzyGet(r, ['incurred', 'approved', 'paid', 'amount'])) || 0;
-                const type = String(fuzzyGet(r, ['type', 'claimtype', 'mode']) || "").toLowerCase();
+                const amt = parseFloat(exactExtract(r, 'Incurred Amount')) || 0;
+                const typeStr = String(exactExtract(r, 'Claim Type') || "").toLowerCase();
                 
-                if (type.includes('reim') || type.includes('re-im') || type.includes('reimb')) {
+                if (typeStr.includes('reim') || typeStr.includes('re-im') || typeStr.includes('reimb') || typeStr.includes('reimbursement')) {
                     typeStats[y].reimbursement.sum += amt;
                     typeStats[y].reimbursement.count++;
                 } else {
@@ -220,30 +223,30 @@
     }
 
     function renderVisualizationElements(years, stats, typeStats, filtered) {
-        // Consolidated
-        document.getElementById('bizHead').innerHTML = '<tr><th>Metric Elements</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
-        document.getElementById('rowVal').innerHTML = `<td>Total Incurred</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
-        document.getElementById('rowCount').innerHTML = `<td>Claims Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
-        document.getElementById('rowAcs').innerHTML = `<td>Incurred ACS</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`).join('');
+        // Consolidated Metric Output Matrix UI rendering hooks
+        document.getElementById('bizHead').innerHTML = '<tr><th>Audit Evaluation Elements</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
+        document.getElementById('rowVal').innerHTML = `<td>Total Incurred Value</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
+        document.getElementById('rowCount').innerHTML = `<td>Total Claims Vol Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
+        document.getElementById('rowAcs').innerHTML = `<td>Average Claim Size (Incurred ACS)</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`).join('');
 
-        // Matrix Grid Headers
-        let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Modality Metrics</th>`;
+        // Modal Header Grid Frameworks elements structural injection
+        let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Modality Split Metric Metrics</th>`;
         let subHeaderHtml = '';
         years.forEach(y => {
             typeHeaderHtml += `<th colspan="3" style="border-bottom: 1px solid #cbd5e0;">FY ${y}</th>`;
-            subHeaderHtml += `<th>Claims</th><th>Incurred</th><th>ACS</th>`;
+            subHeaderHtml += `<th>Claims Count</th><th>Incurred Value</th><th>Incurred ACS</th>`;
         });
         document.getElementById('typeHeaderRow').innerHTML = typeHeaderHtml;
         document.getElementById('typeSubHeaderRow').innerHTML = subHeaderHtml;
 
-        // Matrix Row Building
+        // Modal Metrics Row rendering logic loops
         const segments = ['Cashless', 'Reimbursement'];
         let typeBodyHtml = '';
         segments.forEach(seg => {
             const key = seg.toLowerCase();
-            let rVol = `<tr><td class="left-align">${seg} - Volume</td>`;
-            let rAmt = `<tr><td class="left-align">${seg} - Incurred Total</td>`;
-            let rAcs = `<tr><td class="left-align">${seg} - Calculated ACS</td>`;
+            let rVol = `<tr><td class="left-align">${seg} Mode - Claims Volume</td>`;
+            let rAmt = `<tr><td class="left-align">${seg} Mode - Total Value</td>`;
+            let rAcs = `<tr><td class="left-align">${seg} Mode - Incurred ACS</td>`;
             
             years.forEach(y => {
                 const c = typeStats[y][key].count;
@@ -258,42 +261,42 @@
         });
         document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
 
-        // Render Analytics Line Graph
+        // Line Chart Instantiation Pipeline logic triggers
         const ctx = document.getElementById('trendChart').getContext('2d');
         if(chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'line',
-            data: { labels: years, datasets: [{ label: 'Global Incurred ACS', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.15, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.04)' }] },
+            data: { labels: years, datasets: [{ label: 'Consolidated Incurred ACS', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.15, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.04)' }] },
             options: { maintainAspectRatio: false }
         });
 
-        // Procedure Breakdown Analysis Top 10 List
-        const proceduresMap = {};
+        // Top 10 Type of Treatment Analysis Arrays Processing hooks
+        const treatmentsMap = {};
         filtered.forEach(r => {
-            const procName = fuzzyGet(r, ['procedure', 'treatment', 'proceduredescription']) || 'Unmapped Treatments';
-            if(!proceduresMap[procName]) proceduresMap[procName] = { globalCount: 0 };
-            proceduresMap[procName].globalCount++;
+            const treatName = exactExtract(r, 'Type of treatment') || exactExtract(r, 'Type of Treatment') || 'Unmapped Categorization';
+            if(!treatmentsMap[treatName]) treatmentsMap[treatName] = { count: 0 };
+            treatmentsMap[treatName].count++;
         });
         
-        const sortedProcedures = Object.entries(proceduresMap).sort((a,b)=>b[1].globalCount - a[1].globalCount).slice(0, 10);
-        document.getElementById('procHead').innerHTML = `<tr><th>Procedure Description</th><th>Volume</th>` + years.map(y => `<th>${y} ACS</th>`).join('') + '</tr>';
+        const sortedTreatments = Object.entries(treatmentsMap).sort((a,b)=>b[1].count - a[1].count).slice(0, 10);
+        document.getElementById('procHead').innerHTML = `<tr><th>Type of Treatment Description</th><th>Volume</th>` + years.map(y => `<th>FY ${y} ACS</th>`).join('') + '</tr>';
         
-        document.getElementById('procBody').innerHTML = sortedProcedures.map(([name, data]) => {
+        document.getElementById('procBody').innerHTML = sortedTreatments.map(([name, data]) => {
             const yearCells = years.map(y => {
-                const matches = filtered.filter(f => (fuzzyGet(f, ['procedure', 'treatment']) || 'Unmapped Treatments') === name && (fuzzyGet(f, ['year']) == y || years.length === 1));
-                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(fuzzyGet(rowObj,['incurred', 'amount'])), 0) / matches.length) : 0;
+                const matches = filtered.filter(f => (exactExtract(f, 'Type of treatment') || exactExtract(f, 'Type of Treatment') || 'Unmapped Categorization') === name && (exactExtract(f, 'Financial year') == y || exactExtract(f, 'Financial Year') == y || years.length === 1));
+                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(exactExtract(rowObj,'Incurred Amount')), 0) / matches.length) : 0;
                 return `<td>${averageCalculated > 0 ? '₹' + averageCalculated.toLocaleString(undefined,{maximumFractionDigits:0}) : '-'}</td>`;
             }).join('');
-            return `<tr><td><strong>${name}</strong></td><td>${data.globalCount}</td>${yearCells}</tr>`;
+            return `<tr><td><strong>${name}</strong></td><td>${data.count}</td>${yearCells}</tr>`;
         }).join('');
     }
 
     function exportToPDF() {
         const reportElement = document.getElementById('pdf-report');
-        const entityName = document.getElementById('pName').innerText.replace(/[^a-zA-Z0-9]/g, '_');
+        const hospitalNameCleaned = document.getElementById('pName').innerText.replace(/[^a-zA-Z0-9]/g, '_');
         html2pdf().set({
             margin: 0.25,
-            filename: `Incurred_Audit_Report_${entityName}.pdf`,
+            filename: `Incurred_ACS_Audit_${hospitalNameCleaned}.pdf`,
             image: { type: 'jpeg', quality: 1 },
             html2canvas: { scale: 2, logging: false },
             jsPDF: { format: 'a4', orientation: 'landscape' }
@@ -302,4 +305,3 @@
 </script>
 </body>
 </html>
-
