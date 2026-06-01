@@ -35,17 +35,17 @@
         
         .segment-table th { background: #edf2f7; font-weight: 600; color: #2d3436; }
         
-        /* Side-by-side flexbox configuration */
-        .chart-row-wrapper { display: flex; flex-direction: row; gap: 12px; margin-bottom: 12px; width: 100%; box-sizing: border-box; }
-        .chart-row-wrapper .card { flex: 1; min-width: 0; margin-bottom: 0; }
-        .chart-box { min-height: 180px; position: relative; width: 100%; }
+        /* Rigid CSS Grid columns to force side-by-side rendering */
+        .chart-grid-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; width: 100%; box-sizing: border-box; }
+        .chart-grid-wrapper .card { margin-bottom: 0; min-width: 0; }
+        .chart-box { height: 180px; position: relative; width: 100%; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
 
         @media print {
             body { background: white; padding: 0; margin: 0; }
             #pdf-report { border: none; padding: 0; width: 100% !important; max-width: 100% !important; }
             .card { box-shadow: none !important; padding: 8px; }
-            .chart-box { min-height: 165px; }
+            .chart-box { height: 165px; }
         }
     </style>
 </head>
@@ -109,7 +109,7 @@
                 </table>
             </div>
 
-            <div class="chart-row-wrapper">
+            <div class="chart-grid-wrapper">
                 <div class="card">
                     <h3>Cashless Dynamic Trend Line Graphic Matrix</h3>
                     <div class="chart-box" id="cashlessContainer"><canvas id="cashlessChart"></canvas></div>
@@ -149,7 +149,7 @@
 
         document.getElementById('uploadScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
-        document.getElementById('hospitalSearch').placeholder = "Loading core data dumps...";
+        document.getElementById('hospitalSearch').placeholder = "Loading data sheets...";
         document.getElementById('hospitalSearch').disabled = true;
 
         const reader = new FileReader();
@@ -164,7 +164,7 @@
                     document.getElementById('hospitalSearch').disabled = false;
                 }
             } catch (err) {
-                alert("File system interface crash: " + err.message);
+                alert("File loading problem: " + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
@@ -179,7 +179,7 @@
 
     function performAnalysis() {
         const input = document.getElementById('hospitalSearch').value.trim().toLowerCase();
-        if(!input) return alert("Please input a valid target numerical Hercules Hosp ID.");
+        if(!input) return alert("Please enter a valid target Hercules Hosp ID.");
 
         const filtered = rawData.filter(r => {
             const rawID = strictColumnExtract(r, 'Herucles Hosp ID') || strictColumnExtract(r, 'Hercules Hosp ID');
@@ -189,7 +189,7 @@
 
         if (filtered.length === 0) {
             const alternativeHeaders = rawData.length > 0 ? Object.keys(rawData[0]).join(' | ') : 'None';
-            return alert("ID Match Error!\n\nNo records match this Hercules Hosp ID.\n\nYour sheet's header configuration keys are:\n" + alternativeHeaders);
+            return alert("ID Match Error!\n\nNo records match this Hercules Hosp ID.\n\nHeaders are:\n" + alternativeHeaders);
         }
 
         const firstRecord = filtered[0];
@@ -243,13 +243,13 @@
             </tr>
         `).join('');
 
-        // Clean instances and generate pure side-by-side line layers
+        // Completely reset chart containers to guarantee lines render side-by-side
         cashlessChartObj = rebuildChartContext('cashlessContainer', 'cashlessChart', cashlessYoyData, '#0984e3', cashlessChartObj);
         reimbChartObj = rebuildChartContext('reimbContainer', 'reimbChart', reimbYoyData, '#e17055', reimbChartObj);
 
         const diagnosisMap = {};
         filtered.forEach(r => {
-            const diagName = strictColumnExtract(r, 'Diagnosis Group') || 'Unmapped Diagnosis Categorization';
+            const diagName = strictColumnExtract(r, 'Diagnosis Group') || 'Unmapped Diagnosis';
             if(!diagnosisMap[diagName]) diagnosisMap[diagName] = { count: 0 };
             diagnosisMap[diagName].count++;
         });
@@ -259,7 +259,7 @@
         document.getElementById('procHead').innerHTML = `<tr><th>Diagnosis Group Description</th><th>Global Volume Count</th>` + years.map(y => `<th>FY ${y} ACS</th>`).join('') + '</tr>';
         document.getElementById('procBody').innerHTML = sortedDiagnosis.map(([name, data]) => {
             const yearCells = years.map(y => {
-                const matches = filtered.filter(f => (strictColumnExtract(f, 'Diagnosis Group') || 'Unmapped Diagnosis Categorization') === name && strictColumnExtract(f, 'Financial year') == y);
+                const matches = filtered.filter(f => (strictColumnExtract(f, 'Diagnosis Group') || 'Unmapped Diagnosis') === name && strictColumnExtract(f, 'Financial year') == y);
                 const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj) => sumVal + parseFloat(strictColumnExtract(rowObj, 'Incurred Amount')), 0) / matches.length) : 0;
                 return `<td>${averageCalculated > 0 ? '₹' + Math.round(averageCalculated).toLocaleString() : '-'}</td>`;
             }).join('');
