@@ -13,13 +13,10 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 10px; margin: 0; }
         .container { max-width: 1250px; margin: auto; padding: 10px; }
         
-        /* Upload Landing Screen Grid layout */
         #uploadScreen { max-width: 550px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.08); display: block; }
         .hospital-icon { width: 70px; height: 70px; fill: var(--primary); margin-bottom: 15px; }
         .upload-btn { background: var(--primary); color: white; padding: 12px 28px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        #statusMsg { margin-top: 15px; font-weight: bold; color: #636e72; font-size: 0.9rem; }
-
-        /* Portal Dashboard Elements Workspace */
+        
         #mainDashboard { display: none; }
         .top-bar { background: var(--dark); color: white; padding: 12px; border-radius: 8px; display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
         .search-input { padding: 10px; width: 260px; border-radius: 4px; border: none; font-size: 0.9rem; }
@@ -54,12 +51,11 @@
         <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Select your medical claim dump file to compile Incurred ACS audit views.</p>
         <input type="file" id="fileInput" accept=".xlsx, .xls, .xlsm, .csv" style="display:none">
         <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose Claim Dump Document</button>
-        <div id="statusMsg">Ready for calculation engine pipeline...</div>
     </div>
 
     <div id="mainDashboard">
         <div class="top-bar">
-            <input type="text" id="hospitalSearch" class="search-input" placeholder="Enter Hercules Hosp ID...">
+            <input type="text" id="hospitalSearch" class="search-input" placeholder="Enter Hospital ID number...">
             <button class="btn" style="background:var(--secondary); color:#2d3436;" onclick="performAnalysis()">Run Incurred Analysis</button>
             <button class="btn" style="background:#e17055; color:white;" onclick="exportToPDF()">Save Single Page PDF</button>
             <button class="btn" style="background:#718096; color:white; margin-left:auto;" onclick="location.reload()">Upload Different File</button>
@@ -68,7 +64,7 @@
         <div id="pdf-report">
             <div class="hospital-profile">
                 <div class="profile-card"><span>Provider Facility Name</span><strong id="pName">-</strong></div>
-                <div class="profile-card"><span>Hercules Hospital ID</span><strong id="pRohini">-</strong></div>
+                <div class="profile-card"><span>Targeted Hospital ID</span><strong id="pRohini">-</strong></div>
                 <div class="profile-card"><span>Top Volume Diagnosis Group</span><strong id="pDiag">-</strong></div>
             </div>
 
@@ -123,7 +119,7 @@
         document.getElementById('uploadScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
         
-        document.getElementById('hospitalSearch').placeholder = "Compiling matrix arrays... Please wait.";
+        document.getElementById('hospitalSearch').placeholder = "Loading matrix array models...";
         document.getElementById('hospitalSearch').disabled = true;
 
         const reader = new FileReader();
@@ -131,84 +127,91 @@
             try {
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, {type: 'array', cellDates: true, cellStyles: false});
-                const targetSheet = workbook.Sheets[workbook.SheetNames[0]];
-                
-                rawData = XLSX.utils.sheet_to_json(targetSheet, {defval: ""});
+                rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {defval: ""});
 
                 if (rawData && rawData.length > 0) {
-                    document.getElementById('hospitalSearch').placeholder = "Enter Hercules Hosp ID...";
+                    document.getElementById('hospitalSearch').placeholder = "Enter ID Number & Analyze...";
                     document.getElementById('hospitalSearch').disabled = false;
-                } else {
-                    alert("Sheet parsed but contains zero readable data rows.");
                 }
             } catch (err) {
-                alert("Processing failed: " + err.message);
+                alert("File Read Interception: " + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    // RECTIFIED: Advanced Fuzzy/Flexible Column Mapping to fix spacing/spelling differences
-    function flexibleExtract(row, labelName) {
-        const targetClean = labelName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // RECTIFIED: Bulletproof Fallback Multi-Match Column Extractor
+    function deepScanExtract(row, targetKeywords) {
         const keys = Object.keys(row);
         
-        const foundKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean);
-        return foundKey ? row[foundKey] : null;
+        // 1. Try an exact, clean structural alphanumeric match first
+        for (let target of targetKeywords) {
+            const normalizedTarget = target.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const foundKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedTarget);
+            if (foundKey) return row[foundKey];
+        }
+        
+        // 2. Fallback: Check if any key contains partial pieces of our key parameters
+        for (let target of targetKeywords) {
+            const foundPartialKey = keys.find(k => k.toLowerCase().includes(target.toLowerCase()));
+            if (foundPartialKey) return row[foundPartialKey];
+        }
+        return null;
     }
 
     function performAnalysis() {
         const input = document.getElementById('hospitalSearch').value.trim().toLowerCase();
-        if(!input) return alert("Please type a clear targeted Hercules Hospital Identifier search parameter.");
+        if(!input) return alert("Please specify a numeric search query index.");
 
-        // RECTIFIED: Dynamic structural string matching configuration (avoids text vs number bugs)
+        // RECTIFIED: Deep Scanning Filtering (Looks for ANY column housing ID descriptors)
         const filtered = rawData.filter(r => {
-            const rawID = flexibleExtract(r, 'Herucles Hosp ID') || flexibleExtract(r, 'Hercules Hosp ID');
+            const rawID = deepScanExtract(r, ['herucles hosp id', 'hercules hosp id', 'hospital id', 'hosp id', 'providerid']);
             if (rawID === null || rawID === undefined) return false;
             
-            // Force values to string and remove decimals/whitespaces to align matching architectures
             const cleanID = String(rawID).trim().toLowerCase().split('.')[0];
-            return cleanID === input.split('.')[0];
+            return cleanID === input.split('.')[0] || cleanID.includes(input);
         });
 
         if (filtered.length === 0) {
-            return alert("No records matched! Verify that your search query perfectly matches values in the 'Herucles Hosp ID' column.");
+            // Debug assistance built directly into the notification engine alert box
+            const sampleKeys = rawData.length > 0 ? Object.keys(rawData[0]).join(' | ') : 'None';
+            return alert("ID Match Failed!\n\nWe could not find records matching your ID.\n\nYour sheet's actual columns are:\n" + sampleKeys);
         }
 
         const firstRecord = filtered[0];
-        document.getElementById('pName').innerText = flexibleExtract(firstRecord, 'Providername') || 'N/A';
-        document.getElementById('pRohini').innerText = flexibleExtract(firstRecord, 'Herucles Hosp ID') || flexibleExtract(firstRecord, 'Hercules Hosp ID') || 'N/A';
+        document.getElementById('pName').innerText = deepScanExtract(firstRecord, ['providername', 'provider name', 'hospital name']) || 'N/A';
+        document.getElementById('pRohini').innerText = deepScanExtract(firstRecord, ['herucles hosp id', 'hercules hosp id', 'hospital id', 'hosp id']) || 'N/A';
 
-        // Diagnosis Sorting
+        // Diagnosis Aggregate Mapping
         const diags = {};
         filtered.forEach(r => {
-            const d = flexibleExtract(r, 'Diagnosis Group') || 'Other Conditions';
+            const d = deepScanExtract(r, ['diagnosis group', 'diagnosis', 'disease']) || 'Other Conditions';
             diags[d] = (diags[d] || 0) + 1;
         });
         document.getElementById('pDiag').innerText = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
 
-        // Financial Year extraction
-        const years = [...new Set(filtered.map(r => flexibleExtract(r, 'Financial year')))].filter(Boolean).sort().slice(-3);
-        if(years.length === 0) { years.push("Dump Analysis Set"); }
+        // Timeline Tracking Extraction
+        const years = [...new Set(filtered.map(r => deepScanExtract(r, ['financial year', 'year'])))].filter(Boolean).sort().slice(-3);
+        if(years.length === 0) { years.push("Dump Set"); }
 
-        // Consolidated Financial Summary calculations
+        // Financial Math calculations
         const stats = years.map(y => {
-            const yrSet = filtered.filter(r => flexibleExtract(r, 'Financial year') == y || years.length === 1);
-            const sumIncurred = yrSet.reduce((acc, row) => acc + (parseFloat(flexibleExtract(row, 'Incurred Amount')) || 0), 0);
+            const yrSet = filtered.filter(r => deepScanExtract(r, ['financial year', 'year']) == y || years.length === 1);
+            const sumIncurred = yrSet.reduce((acc, row) => acc + (parseFloat(deepScanExtract(row, ['incurred amount', 'incurred'])) || 0), 0);
             return { year: y, sum: sumIncurred, count: yrSet.length, acs: yrSet.length > 0 ? (sumIncurred / yrSet.length) : 0 };
         });
 
-        // Claim Type Splits
+        // Claim Type Splitting calculations
         const typeStats = {};
         years.forEach(y => {
             typeStats[y] = { cashless: { sum: 0, count: 0 }, reimbursement: { sum: 0, count: 0 } };
-            const yrSet = filtered.filter(r => flexibleExtract(r, 'Financial year') == y || years.length === 1);
+            const yrSet = filtered.filter(r => deepScanExtract(r, ['financial year', 'year']) == y || years.length === 1);
             
             yrSet.forEach(r => {
-                const amt = parseFloat(flexibleExtract(r, 'Incurred Amount')) || 0;
-                const typeStr = String(flexibleExtract(r, 'Claim Type') || "").toLowerCase();
+                const amt = parseFloat(deepScanExtract(r, ['incurred amount', 'incurred'])) || 0;
+                const typeStr = String(deepScanExtract(r, ['claim type', 'type']) || "").toLowerCase();
                 
-                if (typeStr.includes('reim') || typeStr.includes('re-im') || typeStr.includes('reimb') || typeStr.includes('reimbursement')) {
+                if (typeStr.includes('reim') || typeStr.includes('re-im') || typeStr.includes('reimb')) {
                     typeStats[y].reimbursement.sum += amt;
                     typeStats[y].reimbursement.count++;
                 } else {
@@ -222,13 +225,11 @@
     }
 
     function renderVisualizationElements(years, stats, typeStats, filtered) {
-        // Render Master Summary Matrix
         document.getElementById('bizHead').innerHTML = '<tr><th>Audit Evaluation Elements</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
         document.getElementById('rowVal').innerHTML = `<td>Total Incurred Value</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
         document.getElementById('rowCount').innerHTML = `<td>Total Claims Vol Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
         document.getElementById('rowAcs').innerHTML = `<td>Average Claim Size (Incurred ACS)</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`).join('');
 
-        // Segmented Table Headers
         let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Modality Split Metric Metrics</th>`;
         let subHeaderHtml = '';
         years.forEach(y => {
@@ -238,7 +239,6 @@
         document.getElementById('typeHeaderRow').innerHTML = typeHeaderHtml;
         document.getElementById('typeSubHeaderRow').innerHTML = subHeaderHtml;
 
-        // Modality Row building
         const segments = ['Cashless', 'Reimbursement'];
         let typeBodyHtml = '';
         segments.forEach(seg => {
@@ -260,7 +260,6 @@
         });
         document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
 
-        // Render Graph
         const ctx = document.getElementById('trendChart').getContext('2d');
         if(chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
@@ -269,10 +268,9 @@
             options: { maintainAspectRatio: false }
         });
 
-        // Top 10 treatments lists
         const treatmentsMap = {};
         filtered.forEach(r => {
-            const treatName = flexibleExtract(r, 'Type of treatment') || 'Unmapped Categorization';
+            const treatName = deepScanExtract(r, ['type of treatment', 'treatment']) || 'Unmapped Categorization';
             if(!treatmentsMap[treatName]) treatmentsMap[treatName] = { count: 0 };
             treatmentsMap[treatName].count++;
         });
@@ -282,8 +280,8 @@
         
         document.getElementById('procBody').innerHTML = sortedTreatments.map(([name, data]) => {
             const yearCells = years.map(y => {
-                const matches = filtered.filter(f => (flexibleExtract(f, 'Type of treatment') || 'Unmapped Categorization') === name && (flexibleExtract(f, 'Financial year') == y || years.length === 1));
-                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(flexibleExtract(rowObj,'Incurred Amount')), 0) / matches.length) : 0;
+                const matches = filtered.filter(f => (deepScanExtract(f, ['type of treatment']) || 'Unmapped Categorization') === name && (deepScanExtract(f, ['financial year']) == y || years.length === 1));
+                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(deepScanExtract(rowObj,['incurred amount'])), 0) / matches.length) : 0;
                 return `<td>${averageCalculated > 0 ? '₹' + averageCalculated.toLocaleString(undefined,{maximumFractionDigits:0}) : '-'}</td>`;
             }).join('');
             return `<tr><td><strong>${name}</strong></td><td>${data.count}</td>${yearCells}</tr>`;
