@@ -11,7 +11,7 @@
     <style>
         :root { --primary: #0984e3; --secondary: #00cec9; --dark: #2d3436; --light: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 5px; margin: 0; }
-        .container { max-width: 1150px; margin: auto; padding: 5px; }
+        .container { max-width: 1200px; margin: auto; padding: 5px; }
         
         #uploadScreen { max-width: 550px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.08); }
         .hospital-icon { width: 70px; height: 70px; fill: var(--primary); margin-bottom: 15px; }
@@ -35,15 +35,17 @@
         
         .segment-table th { background: #edf2f7; font-weight: 600; color: #2d3436; }
         
-        /* Direct vertical stacking framework elements layout structure */
-        .chart-stack-wrapper { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
-        .chart-box { min-height: 160px; position: relative; width: 100%; }
+        /* Side-by-side flexbox configuration */
+        .chart-row-wrapper { display: flex; flex-direction: row; gap: 12px; margin-bottom: 12px; width: 100%; box-sizing: border-box; }
+        .chart-row-wrapper .card { flex: 1; min-width: 0; margin-bottom: 0; }
+        .chart-box { min-height: 180px; position: relative; width: 100%; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
 
         @media print {
             body { background: white; padding: 0; margin: 0; }
             #pdf-report { border: none; padding: 0; width: 100% !important; max-width: 100% !important; }
-            .card { box-shadow: none !important; margin-bottom: 10px; padding: 8px; }
+            .card { box-shadow: none !important; padding: 8px; }
+            .chart-box { min-height: 165px; }
         }
     </style>
 </head>
@@ -107,7 +109,7 @@
                 </table>
             </div>
 
-            <div class="chart-stack-wrapper">
+            <div class="chart-row-wrapper">
                 <div class="card">
                     <h3>Cashless Dynamic Trend Line Graphic Matrix</h3>
                     <div class="chart-box" id="cashlessContainer"><canvas id="cashlessChart"></canvas></div>
@@ -241,7 +243,7 @@
             </tr>
         `).join('');
 
-        // Absolute Context Destruction and Fresh Realization Engine Pipeline
+        // Clean instances and generate pure side-by-side line layers
         cashlessChartObj = rebuildChartContext('cashlessContainer', 'cashlessChart', cashlessYoyData, '#0984e3', cashlessChartObj);
         reimbChartObj = rebuildChartContext('reimbContainer', 'reimbChart', reimbYoyData, '#e17055', reimbChartObj);
 
@@ -269,7 +271,6 @@
         }
     }
 
-    // Force context recreation to ensure absolute structural formatting logic compliance
     function rebuildChartContext(containerId, canvasId, dataset, financialLineColor, currentChartInstance) {
         if (currentChartInstance) {
             currentChartInstance.destroy();
@@ -289,9 +290,9 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'No. of Claims YoY', data: counts, borderColor: '#74b9ff', backgroundColor: '#74b9ff', borderWidth: 3, fill: false, yAxisID: 'yAxisLeft', tension: 0.1, pointRadius: 4 },
-                    { label: 'Pay to Hospital YoY', data: pays, borderColor: financialLineColor, backgroundColor: financialLineColor, borderWidth: 3, fill: false, yAxisID: 'yAxisRight', tension: 0.1, pointRadius: 4 },
-                    { label: 'Average Claim Size (ACS) YoY', data: acsVals, borderColor: '#00cec9', backgroundColor: '#00cec9', borderWidth: 3, fill: false, yAxisID: 'yAxisRight', tension: 0.1, pointRadius: 4 }
+                    { label: 'Claims Count', data: counts, borderColor: '#74b9ff', backgroundColor: '#74b9ff', borderWidth: 2.5, fill: false, yAxisID: 'yAxisLeft', tension: 0.1, pointRadius: 3.5 },
+                    { label: 'Pay to Hosp', data: pays, borderColor: financialLineColor, backgroundColor: financialLineColor, borderWidth: 2.5, fill: false, yAxisID: 'yAxisRight', tension: 0.1, pointRadius: 3.5 },
+                    { label: 'ACS (₹)', data: acsVals, borderColor: '#00cec9', backgroundColor: '#00cec9', borderWidth: 2.5, fill: false, yAxisID: 'yAxisRight', tension: 0.1, pointRadius: 3.5 }
                 ]
             },
             options: {
@@ -299,11 +300,11 @@
                 responsive: true,
                 animation: false,
                 scales: {
-                    yAxisLeft: { type: 'linear', position: 'left', title: { display: true, text: 'Claims Count', font: { size: 9, weight: 'bold' } }, ticks: { font: { size: 8 } } },
+                    yAxisLeft: { type: 'linear', position: 'left', title: { display: true, text: 'Vol Count', font: { size: 9, weight: 'bold' } }, ticks: { font: { size: 8 } } },
                     yAxisRight: { type: 'linear', position: 'right', title: { display: true, text: 'Financials (₹)', font: { size: 9, weight: 'bold' } }, ticks: { font: { size: 8 }, callback: v => '₹' + v.toLocaleString() } }
                 },
                 plugins: {
-                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 9, weight: '500' } } }
+                    legend: { position: 'top', labels: { boxWidth: 10, font: { size: 8.5 } } }
                 }
             }
         });
