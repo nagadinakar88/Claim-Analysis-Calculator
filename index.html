@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Claim Dump Intelligence</title>
-    <!-- Stable analytical dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -26,7 +25,6 @@
         .search-input { padding: 10px; width: 260px; border-radius: 4px; border: none; font-size: 0.9rem; }
         
         #pdf-report { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e1e8ed; }
-        /* Adjusted grid layout to exactly accommodate 3 elements elegantly */
         .hospital-profile { background: var(--primary); color: white; padding: 14px; border-radius: 6px; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 15px; margin-bottom: 15px; }
         .profile-card span { display: block; font-size: 10px; text-transform: uppercase; opacity: 0.85; margin-bottom: 2px; letter-spacing: 0.5px; }
         .profile-card strong { font-size: 1.15rem; }
@@ -50,7 +48,6 @@
 <body>
 
 <div class="container">
-    <!-- STAGE 1: ASYNCHRONOUS SECURE UPLOAD SCREEN -->
     <div id="uploadScreen">
         <svg class="hospital-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
         <h2>Hospital Claims Intelligence</h2>
@@ -60,7 +57,6 @@
         <div id="statusMsg">Ready for calculation engine pipeline...</div>
     </div>
 
-    <!-- STAGE 2: LIVE AUDIT DASHBOARD -->
     <div id="mainDashboard">
         <div class="top-bar">
             <input type="text" id="hospitalSearch" class="search-input" placeholder="Enter Hercules Hosp ID...">
@@ -70,14 +66,12 @@
         </div>
 
         <div id="pdf-report">
-            <!-- RECTIFIED: Trimmed down to exactly 3 distinct headers without elements for Discount -->
             <div class="hospital-profile">
                 <div class="profile-card"><span>Provider Facility Name</span><strong id="pName">-</strong></div>
                 <div class="profile-card"><span>Hercules Hospital ID</span><strong id="pRohini">-</strong></div>
                 <div class="profile-card"><span>Top Volume Diagnosis Group</span><strong id="pDiag">-</strong></div>
             </div>
 
-            <!-- Global Consolidated Historical Table Layout Matrix -->
             <div class="card">
                 <h3>Financial Summary Breakdown (Incurred Amount Analysis)</h3>
                 <table>
@@ -90,7 +84,6 @@
                 </table>
             </div>
 
-            <!-- Segmented Modal Grid Split: Cashless vs Reimbursement -->
             <div class="card">
                 <h3>Claim Type Segmentation Matrix (Historical Split)</h3>
                 <table class="type-table">
@@ -102,7 +95,6 @@
                 </table>
             </div>
 
-            <!-- Bottom Multi-View Grid Components -->
             <div class="report-grid">
                 <div class="card">
                     <h3>Incurred ACS Trend Tracker</h3>
@@ -124,12 +116,10 @@
     let rawData = null;
     let chartInstance = null;
 
-    // Trigger explicit async transition rules immediately on state change
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Force viewport change to shield parsing memory allocation overheads
         document.getElementById('uploadScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
         
@@ -143,71 +133,80 @@
                 const workbook = XLSX.read(data, {type: 'array', cellDates: true, cellStyles: false});
                 const targetSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Read sheet objects cleanly
                 rawData = XLSX.utils.sheet_to_json(targetSheet, {defval: ""});
 
                 if (rawData && rawData.length > 0) {
                     document.getElementById('hospitalSearch').placeholder = "Enter Hercules Hosp ID...";
                     document.getElementById('hospitalSearch').disabled = false;
                 } else {
-                    alert("Sheet parsing successfully bypass execution but schema holds zero metrics rows.");
+                    alert("Sheet parsed but contains zero readable data rows.");
                 }
             } catch (err) {
-                alert("Fail-safe interception hit: " + err.message);
+                alert("Processing failed: " + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    // Explicit Schema Mapping Methods bound natively to user file dictionary layout
-    function exactExtract(row, exactLabel) {
-        return row[exactLabel] !== undefined ? row[exactLabel] : null;
+    // RECTIFIED: Advanced Fuzzy/Flexible Column Mapping to fix spacing/spelling differences
+    function flexibleExtract(row, labelName) {
+        const targetClean = labelName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const keys = Object.keys(row);
+        
+        const foundKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean);
+        return foundKey ? row[foundKey] : null;
     }
 
     function performAnalysis() {
         const input = document.getElementById('hospitalSearch').value.trim().toLowerCase();
         if(!input) return alert("Please type a clear targeted Hercules Hospital Identifier search parameter.");
 
-        // Structural schema mapping based strictly on user provided metadata definitions
+        // RECTIFIED: Dynamic structural string matching configuration (avoids text vs number bugs)
         const filtered = rawData.filter(r => {
-            const hID = String(exactExtract(r, 'Herucles Hosp ID') || "").toLowerCase().trim();
-            return hID === input;
+            const rawID = flexibleExtract(r, 'Herucles Hosp ID') || flexibleExtract(r, 'Hercules Hosp ID');
+            if (rawID === null || rawID === undefined) return false;
+            
+            // Force values to string and remove decimals/whitespaces to align matching architectures
+            const cleanID = String(rawID).trim().toLowerCase().split('.')[0];
+            return cleanID === input.split('.')[0];
         });
 
-        if (filtered.length === 0) return alert("The searched Hercules Hospital ID matches zero data points inside this claim dump tracking records.");
+        if (filtered.length === 0) {
+            return alert("No records matched! Verify that your search query perfectly matches values in the 'Herucles Hosp ID' column.");
+        }
 
         const firstRecord = filtered[0];
-        document.getElementById('pName').innerText = exactExtract(firstRecord, 'Providername') || exactExtract(firstRecord, 'Provider Name') || 'N/A';
-        document.getElementById('pRohini').innerText = exactExtract(firstRecord, 'Herucles Hosp ID') || 'N/A';
+        document.getElementById('pName').innerText = flexibleExtract(firstRecord, 'Providername') || 'N/A';
+        document.getElementById('pRohini').innerText = flexibleExtract(firstRecord, 'Herucles Hosp ID') || flexibleExtract(firstRecord, 'Hercules Hosp ID') || 'N/A';
 
-        // Diagnosis Groups Metric Sorting logic
+        // Diagnosis Sorting
         const diags = {};
         filtered.forEach(r => {
-            const d = exactExtract(r, 'Diagnosis Group') || 'Other Conditions';
+            const d = flexibleExtract(r, 'Diagnosis Group') || 'Other Conditions';
             diags[d] = (diags[d] || 0) + 1;
         });
         document.getElementById('pDiag').innerText = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
 
-        // Financial Year Dynamic Timeline Generation Pipeline tracking
-        const years = [...new Set(filtered.map(r => exactExtract(r, 'Financial year') || exactExtract(r, 'Financial Year')))].filter(Boolean).sort().slice(-3);
+        // Financial Year extraction
+        const years = [...new Set(filtered.map(r => flexibleExtract(r, 'Financial year')))].filter(Boolean).sort().slice(-3);
         if(years.length === 0) { years.push("Dump Analysis Set"); }
 
-        // Compute Consolidated Metrics
+        // Consolidated Financial Summary calculations
         const stats = years.map(y => {
-            const yrSet = filtered.filter(r => exactExtract(r, 'Financial year') == y || exactExtract(r, 'Financial Year') == y || years.length === 1);
-            const sumIncurred = yrSet.reduce((acc, row) => acc + (parseFloat(exactExtract(row, 'Incurred Amount')) || 0), 0);
+            const yrSet = filtered.filter(r => flexibleExtract(r, 'Financial year') == y || years.length === 1);
+            const sumIncurred = yrSet.reduce((acc, row) => acc + (parseFloat(flexibleExtract(row, 'Incurred Amount')) || 0), 0);
             return { year: y, sum: sumIncurred, count: yrSet.length, acs: yrSet.length > 0 ? (sumIncurred / yrSet.length) : 0 };
         });
 
-        // Compute Multi-Category Treatment Segmentation Array splits
+        // Claim Type Splits
         const typeStats = {};
         years.forEach(y => {
             typeStats[y] = { cashless: { sum: 0, count: 0 }, reimbursement: { sum: 0, count: 0 } };
-            const yrSet = filtered.filter(r => exactExtract(r, 'Financial year') == y || exactExtract(r, 'Financial Year') == y || years.length === 1);
+            const yrSet = filtered.filter(r => flexibleExtract(r, 'Financial year') == y || years.length === 1);
             
             yrSet.forEach(r => {
-                const amt = parseFloat(exactExtract(r, 'Incurred Amount')) || 0;
-                const typeStr = String(exactExtract(r, 'Claim Type') || "").toLowerCase();
+                const amt = parseFloat(flexibleExtract(r, 'Incurred Amount')) || 0;
+                const typeStr = String(flexibleExtract(r, 'Claim Type') || "").toLowerCase();
                 
                 if (typeStr.includes('reim') || typeStr.includes('re-im') || typeStr.includes('reimb') || typeStr.includes('reimbursement')) {
                     typeStats[y].reimbursement.sum += amt;
@@ -223,13 +222,13 @@
     }
 
     function renderVisualizationElements(years, stats, typeStats, filtered) {
-        // Consolidated Metric Output Matrix UI rendering hooks
+        // Render Master Summary Matrix
         document.getElementById('bizHead').innerHTML = '<tr><th>Audit Evaluation Elements</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
         document.getElementById('rowVal').innerHTML = `<td>Total Incurred Value</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
         document.getElementById('rowCount').innerHTML = `<td>Total Claims Vol Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
         document.getElementById('rowAcs').innerHTML = `<td>Average Claim Size (Incurred ACS)</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`).join('');
 
-        // Modal Header Grid Frameworks elements structural injection
+        // Segmented Table Headers
         let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Modality Split Metric Metrics</th>`;
         let subHeaderHtml = '';
         years.forEach(y => {
@@ -239,7 +238,7 @@
         document.getElementById('typeHeaderRow').innerHTML = typeHeaderHtml;
         document.getElementById('typeSubHeaderRow').innerHTML = subHeaderHtml;
 
-        // Modal Metrics Row rendering logic loops
+        // Modality Row building
         const segments = ['Cashless', 'Reimbursement'];
         let typeBodyHtml = '';
         segments.forEach(seg => {
@@ -261,7 +260,7 @@
         });
         document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
 
-        // Line Chart Instantiation Pipeline logic triggers
+        // Render Graph
         const ctx = document.getElementById('trendChart').getContext('2d');
         if(chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
@@ -270,10 +269,10 @@
             options: { maintainAspectRatio: false }
         });
 
-        // Top 10 Type of Treatment Analysis Arrays Processing hooks
+        // Top 10 treatments lists
         const treatmentsMap = {};
         filtered.forEach(r => {
-            const treatName = exactExtract(r, 'Type of treatment') || exactExtract(r, 'Type of Treatment') || 'Unmapped Categorization';
+            const treatName = flexibleExtract(r, 'Type of treatment') || 'Unmapped Categorization';
             if(!treatmentsMap[treatName]) treatmentsMap[treatName] = { count: 0 };
             treatmentsMap[treatName].count++;
         });
@@ -283,8 +282,8 @@
         
         document.getElementById('procBody').innerHTML = sortedTreatments.map(([name, data]) => {
             const yearCells = years.map(y => {
-                const matches = filtered.filter(f => (exactExtract(f, 'Type of treatment') || exactExtract(f, 'Type of Treatment') || 'Unmapped Categorization') === name && (exactExtract(f, 'Financial year') == y || exactExtract(f, 'Financial Year') == y || years.length === 1));
-                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(exactExtract(rowObj,'Incurred Amount')), 0) / matches.length) : 0;
+                const matches = filtered.filter(f => (flexibleExtract(f, 'Type of treatment') || 'Unmapped Categorization') === name && (flexibleExtract(f, 'Financial year') == y || years.length === 1));
+                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(flexibleExtract(rowObj,'Incurred Amount')), 0) / matches.length) : 0;
                 return `<td>${averageCalculated > 0 ? '₹' + averageCalculated.toLocaleString(undefined,{maximumFractionDigits:0}) : '-'}</td>`;
             }).join('');
             return `<tr><td><strong>${name}</strong></td><td>${data.count}</td>${yearCells}</tr>`;
