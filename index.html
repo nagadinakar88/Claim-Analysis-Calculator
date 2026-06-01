@@ -13,7 +13,7 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 10px; margin: 0; }
         .container { max-width: 1250px; margin: auto; padding: 10px; }
         
-        #uploadScreen { max-width: 550px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.08); display: block; }
+        #uploadScreen { max-width: 550px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.08); }
         .hospital-icon { width: 70px; height: 70px; fill: var(--primary); margin-bottom: 15px; }
         .upload-btn { background: var(--primary); color: white; padding: 12px 28px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         
@@ -29,16 +29,15 @@
         .card { border: 1px solid #e1e8ed; padding: 15px; border-radius: 6px; background: #fff; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--primary); border-bottom: 1px solid #edf2f7; padding-bottom: 6px; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #f7fafc; padding: 6px 8px; text-align: left; border-bottom: 2px solid var(--primary); color: #4a5568; }
-        td { padding: 6px 8px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 5px; }
+        th { background: #f7fafc; padding: 8px; text-align: left; border-bottom: 2px solid var(--primary); color: #4a5568; }
+        td { padding: 8px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
         
-        .type-table th { background: #edf2f7; text-align: center; font-weight: 600; }
-        .type-table td { text-align: center; }
-        .type-table .left-align { text-align: left; font-weight: bold; background: #f7fafc; }
+        .segment-table th { background: #edf2f7; font-weight: 600; color: #2d3436; }
         
-        .report-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; }
-        .chart-container { position: relative; height: 180px; width: 100%; }
+        .report-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
+        .chart-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .chart-container { position: relative; height: 220px; width: 100%; }
         .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
@@ -48,7 +47,7 @@
     <div id="uploadScreen">
         <svg class="hospital-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
         <h2>Hospital Claims Intelligence</h2>
-        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Select your medical claim dump file to compile Incurred ACS audit views.</p>
+        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Select your medical claim dump file to compile dynamic financial tracking matrices.</p>
         <input type="file" id="fileInput" accept=".xlsx, .xls, .xlsm, .csv" style="display:none">
         <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose Claim Dump Document</button>
     </div>
@@ -69,40 +68,63 @@
             </div>
 
             <div class="card">
-                <h3>Financial Summary Breakdown (Incurred Amount Analysis)</h3>
-                <table>
-                    <thead id="bizHead"><tr><th>Audit Evaluation Elements</th></tr></thead>
-                    <tbody id="bizBody">
-                        <tr id="rowVal"><td>Total Incurred Value</td></tr>
-                        <tr id="rowCount"><td>Total Claims Vol Count</td></tr>
-                        <tr id="rowAcs"><td>Average Claim Size (Incurred ACS)</td></tr>
+                <h3>Cashless Modality Summary Performance (Year-on-Year)</h3>
+                <table class="segment-table">
+                    <thead>
+                        <tr>
+                            <th>Financial Year</th>
+                            <th>No. of Claims in Cashless</th>
+                            <th>Total Pay to Hospital (Incurred)</th>
+                            <th>Average Claim Size (Cashless ACS)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cashlessBody">
+                        <tr><td colspan="4" style="text-align:center; color:#718096;">Execute search parameter to render data rows.</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="card">
-                <h3>Claim Type Segmentation Matrix (Historical Split)</h3>
-                <table class="type-table">
+                <h3>Reimbursement Modality Summary Performance (Year-on-Year)</h3>
+                <table class="segment-table">
                     <thead>
-                        <tr id="typeHeaderRow"><th rowspan="2" style="text-align:left; width: 20%; vertical-align: middle;">Modality Split Metric Metrics</th></tr>
-                        <tr id="typeSubHeaderRow"></tr>
+                        <tr>
+                            <th>Financial Year</th>
+                            <th>No. of Claims in Reimbursement</th>
+                            <th>Total Incurred Pay (Reimbursement)</th>
+                            <th>Average Claim Size (Reimbursement ACS)</th>
+                        </tr>
                     </thead>
-                    <tbody id="typeTableBody"></tbody>
+                    <tbody id="reimbBody">
+                        <tr><td colspan="4" style="text-align:center; color:#718096;">Execute search parameter to render data rows.</td></tr>
+                    </tbody>
                 </table>
             </div>
 
-            <div class="report-grid">
+            <div class="chart-wrapper">
                 <div class="card">
-                    <h3>Incurred ACS Trend Tracker</h3>
-                    <div class="chart-container"><canvas id="trendChart"></canvas></div>
+                    <h3>Cashless Dynamic Trend Graphic Matrix</h3>
+                    <div class="chart-container"><canvas id="cashlessChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <h3>Top 10 High-Volume Treatments Breakdown</h3>
-                    <table id="procTable">
-                        <thead id="procHead"><tr><th>Type of Treatment Description</th><th>Volume</th></tr></thead>
-                        <tbody id="procBody"></tbody>
-                    </table>
+                    <h3>Reimbursement Dynamic Trend Graphic Matrix</h3>
+                    <div class="chart-container"><canvas id="reimbChart"></canvas></div>
                 </div>
+            </div>
+
+            <div class="card">
+                <h3>Top 10 High-Volume Diagnosis Groups Breakdown</h3>
+                <table id="procTable">
+                    <thead id="procHead">
+                        <tr>
+                            <th>Diagnosis Group Description</th>
+                            <th>Global Volume Counts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="procBody">
+                        <tr><td colspan="2" style="text-align:center; color:#718096;">No metrics compiled.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -110,7 +132,8 @@
 
 <script>
     let rawData = null;
-    let chartInstance = null;
+    let cashlessChartObj = null;
+    let reimbChartObj = null;
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -118,8 +141,7 @@
 
         document.getElementById('uploadScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
-        
-        document.getElementById('hospitalSearch').placeholder = "Loading spreadsheet file metrics...";
+        document.getElementById('hospitalSearch').placeholder = "Loading core data dumps...";
         document.getElementById('hospitalSearch').disabled = true;
 
         const reader = new FileReader();
@@ -134,147 +156,148 @@
                     document.getElementById('hospitalSearch').disabled = false;
                 }
             } catch (err) {
-                alert("File Access Exception: " + err.message);
+                alert("File system interface crash: " + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    // Clean exact structural string match extractor
     function strictColumnExtract(row, targetName) {
         const cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
         const keys = Object.keys(row);
-        
         const matchingKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
         return matchingKey ? row[matchingKey] : null;
     }
 
     function performAnalysis() {
         const input = document.getElementById('hospitalSearch').value.trim().toLowerCase();
-        if(!input) return alert("Please specify a numeric Hercules Hosp ID parameter.");
+        if(!input) return alert("Please input a valid target numerical Hercules Hosp ID.");
 
-        // STRICT ROUTING CRITERIA: Explicit query match targeting Herucles Hosp ID column
         const filtered = rawData.filter(r => {
             const rawID = strictColumnExtract(r, 'Herucles Hosp ID') || strictColumnExtract(r, 'Hercules Hosp ID');
             if (rawID === null || rawID === undefined) return false;
-            
-            const cleanID = String(rawID).trim().toLowerCase().split('.')[0];
-            return cleanID === input.split('.')[0];
+            return String(rawID).trim().toLowerCase().split('.')[0] === input.split('.')[0];
         });
 
         if (filtered.length === 0) {
-            const availableColumns = rawData.length > 0 ? Object.keys(rawData[0]).join(' | ') : 'None';
-            return alert("ID Match Failed!\n\nNo rows matched this Hercules Hosp ID.\n\nYour sheet's actual columns are:\n" + availableColumns);
+            const alternativeHeaders = rawData.length > 0 ? Object.keys(rawData[0]).join(' | ') : 'None';
+            return alert("ID Match Error!\n\nNo records match this Hercules Hosp ID.\n\nYour sheet's header configuration keys are:\n" + alternativeHeaders);
         }
 
         const firstRecord = filtered[0];
         document.getElementById('pName').innerText = strictColumnExtract(firstRecord, 'Providername') || 'N/A';
         document.getElementById('pTrackingID').innerText = strictColumnExtract(firstRecord, 'Herucles Hosp ID') || strictColumnExtract(firstRecord, 'Hercules Hosp ID') || 'N/A';
 
-        // Diagnostics Aggregate Calculation
-        const diags = {};
-        filtered.forEach(r => {
-            const d = strictColumnExtract(r, 'Diagnosis Group') || 'Other Conditions';
-            diags[d] = (diags[d] || 0) + 1;
-        });
-        document.getElementById('pDiag').innerText = Object.entries(diags).sort((a,b)=>b[1]-a[1])[0][0];
-
-        // Financial Year Extraction
+        // Extract Timeline parameters sequentially
         const years = [...new Set(filtered.map(r => strictColumnExtract(r, 'Financial year')))].filter(Boolean).sort().slice(-3);
         if(years.length === 0) { years.push("Dump Set"); }
 
-        // Core Matrix Sums
-        const stats = years.map(y => {
-            const yrSet = filtered.filter(r => strictColumnExtract(r, 'Financial year') == y || years.length === 1);
-            const sumIncurred = yrSet.reduce((acc, row) => acc + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
-            return { year: y, sum: sumIncurred, count: yrSet.length, acs: yrSet.length > 0 ? (sumIncurred / yrSet.length) : 0 };
-        });
+        const cashlessYoyData = [];
+        const reimbYoyData = [];
 
-        // Split Mode Metrics calculation
-        const typeStats = {};
         years.forEach(y => {
-            typeStats[y] = { cashless: { sum: 0, count: 0 }, reimbursement: { sum: 0, count: 0 } };
-            const yrSet = filtered.filter(r => strictColumnExtract(r, 'Financial year') == y || years.length === 1);
+            const yrSet = filtered.filter(r => strictColumnExtract(r, 'Financial year') == y);
             
-            yrSet.forEach(r => {
-                const amt = parseFloat(strictColumnExtract(r, 'Incurred Amount')) || 0;
-                const typeStr = String(strictColumnExtract(r, 'Claim Type') || "").toLowerCase();
-                
-                if (typeStr.includes('reim') || typeStr.includes('re-im') || typeStr.includes('reimb')) {
-                    typeStats[y].reimbursement.sum += amt;
-                    typeStats[y].reimbursement.count++;
-                } else {
-                    typeStats[y].cashless.sum += amt;
-                    typeStats[y].cashless.count++;
-                }
+            // Segregate by data string criteria evaluation paths
+            const cashlessRows = yrSet.filter(r => {
+                const type = String(strictColumnExtract(r, 'Claim Type') || "").toLowerCase();
+                return !(type.includes('reim') || type.includes('re-im') || type.includes('reimb'));
             });
-        });
-
-        renderVisualizationElements(years, stats, typeStats, filtered);
-    }
-
-    function renderVisualizationElements(years, stats, typeStats, filtered) {
-        document.getElementById('bizHead').innerHTML = '<tr><th>Audit Evaluation Elements</th>' + years.map(y => `<th>FY ${y}</th>`).join('') + '</tr>';
-        document.getElementById('rowVal').innerHTML = `<td>Total Incurred Value</td>` + stats.map(s => `<td>₹${s.sum.toLocaleString()}</td>`).join('');
-        document.getElementById('rowCount').innerHTML = `<td>Total Claims Vol Count</td>` + stats.map(s => `<td>${s.count}</td>`).join('');
-        document.getElementById('rowAcs').innerHTML = `<td>Average Claim Size (Incurred ACS)</td>` + stats.map(s => `<td>₹${s.acs.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`).join('');
-
-        let typeHeaderHtml = `<th rowspan="2" style="text-align:left; vertical-align:middle;">Modality Split Metric Metrics</th>`;
-        let subHeaderHtml = '';
-        years.forEach(y => {
-            typeHeaderHtml += `<th colspan="3" style="border-bottom: 1px solid #cbd5e0;">FY ${y}</th>`;
-            subHeaderHtml += `<th>Claims Count</th><th>Incurred Value</th><th>Incurred ACS</th>`;
-        });
-        document.getElementById('typeHeaderRow').innerHTML = typeHeaderHtml;
-        document.getElementById('typeSubHeaderRow').innerHTML = subHeaderHtml;
-
-        const segments = ['Cashless', 'Reimbursement'];
-        let typeBodyHtml = '';
-        segments.forEach(seg => {
-            const key = seg.toLowerCase();
-            let rVol = `<tr><td class="left-align">${seg} Mode - Claims Volume</td>`;
-            let rAmt = `<tr><td class="left-align">${seg} Mode - Total Value</td>`;
-            let rAcs = `<tr><td class="left-align">${seg} Mode - Incurred ACS</td>`;
-            
-            years.forEach(y => {
-                const c = typeStats[y][key].count;
-                const s = typeStats[y][key].sum;
-                const a = c > 0 ? (s / c) : 0;
-                
-                rVol += `<td>${c}</td>`;
-                rAmt += `<td>₹${s.toLocaleString()}</td>`;
-                rAcs += `<td>₹${a.toLocaleString(undefined,{maximumFractionDigits:0})}</td>`;
+            const reimbRows = yrSet.filter(r => {
+                const type = String(strictColumnExtract(r, 'Claim Type') || "").toLowerCase();
+                return (type.includes('reim') || type.includes('re-im') || type.includes('reimb'));
             });
-            typeBodyHtml += rVol + '</tr>' + rAmt + '</tr>' + rAcs + '</tr>';
-        });
-        document.getElementById('typeTableBody').innerHTML = typeBodyHtml;
 
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: { labels: years, datasets: [{ label: 'Consolidated Incurred ACS', data: stats.map(s => s.acs), borderColor: '#0984e3', tension: 0.15, fill: true, backgroundColor: 'rgba(9, 132, 227, 0.04)' }] },
-            options: { maintainAspectRatio: false }
+            // Math transformations logic mapping for Cashless
+            const cSum = cashlessRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
+            const cCount = cashlessRows.length;
+            const cAcs = cCount > 0 ? (cSum / cCount) : 0;
+            cashlessYoyData.push({ year: y, count: cCount, totalPay: cSum, acs: cAcs });
+
+            // Math transformations logic mapping for Reimbursement
+            const rSum = reimbRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
+            const rCount = reimbRows.length;
+            const rAcs = rCount > 0 ? (rSum / rCount) : 0;
+            reimbYoyData.push({ year: y, count: rCount, totalPay: rSum, acs: rAcs });
         });
 
-        const treatmentsMap = {};
+        // Inject Table Data Array Matrices
+        document.getElementById('cashlessBody').innerHTML = cashlessYoyData.map(d => `
+            <tr>
+                <td><strong>FY ${d.year}</strong></td>
+                <td>${d.count}</td>
+                <td>₹${d.totalPay.toLocaleString()}</td>
+                <td><strong>₹${Math.round(d.acs).toLocaleString()}</strong></td>
+            </tr>
+        `).join('');
+
+        document.getElementById('reimbBody').innerHTML = reimbYoyData.map(d => `
+            <tr>
+                <td><strong>FY ${d.year}</strong></td>
+                <td>${d.count}</td>
+                <td>₹${d.totalPay.toLocaleString()}</td>
+                <td><strong>₹${Math.round(d.acs).toLocaleString()}</strong></td>
+            </tr>
+        `).join('');
+
+        // Invoke visualization rendering pipelines
+        buildDualAxisChart('cashlessChart', cashlessYoyData, '#0984e3', cashlessChartObj, obj => cashlessChartObj = obj);
+        buildDualAxisChart('reimbChart', reimbYoyData, '#e17055', reimbChartObj, obj => reimbChartObj = obj);
+
+        // Compute Top 10 High Volume Reports by DIAGNOSIS GROUP
+        const diagnosisMap = {};
         filtered.forEach(r => {
-            const treatName = strictColumnExtract(r, 'Type of treatment') || 'Unmapped Categorization';
-            if(!treatmentsMap[treatName]) treatmentsMap[treatName] = { count: 0 };
-            treatmentsMap[treatName].count++;
+            const diagName = strictColumnExtract(r, 'Diagnosis Group') || 'Unmapped Diagnosis Categorization';
+            if(!diagnosisMap[diagName]) diagnosisMap[diagName] = { count: 0 };
+            diagnosisMap[diagName].count++;
         });
+
+        const sortedDiagnosis = Object.entries(diagnosisMap).sort((a,b) => b[1].count - a[1].count).slice(0, 10);
         
-        const sortedTreatments = Object.entries(treatmentsMap).sort((a,b)=>b[1].count - a[1].count).slice(0, 10);
-        document.getElementById('procHead').innerHTML = `<tr><th>Type of Treatment Description</th><th>Volume</th>` + years.map(y => `<th>FY ${y} ACS</th>`).join('') + '</tr>';
-        
-        document.getElementById('procBody').innerHTML = sortedTreatments.map(([name, data]) => {
+        document.getElementById('procHead').innerHTML = `<tr><th>Diagnosis Group Description</th><th>Global Volume Count</th>` + years.map(y => `<th>FY ${y} ACS</th>`).join('') + '</tr>';
+        document.getElementById('procBody').innerHTML = sortedDiagnosis.map(([name, data]) => {
             const yearCells = years.map(y => {
-                const matches = filtered.filter(f => (strictColumnExtract(f, 'Type of treatment') || 'Unmapped Categorization') === name && (strictColumnExtract(f, 'Financial year') == y || years.length === 1));
-                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj)=>sumVal + parseFloat(strictColumnExtract(rowObj,['Incurred Amount'])), 0) / matches.length) : 0;
-                return `<td>${averageCalculated > 0 ? '₹' + averageCalculated.toLocaleString(undefined,{maximumFractionDigits:0}) : '-'}</td>`;
+                const matches = filtered.filter(f => (strictColumnExtract(f, 'Diagnosis Group') || 'Unmapped Diagnosis Categorization') === name && strictColumnExtract(f, 'Financial year') == y);
+                const averageCalculated = matches.length ? (matches.reduce((sumVal, rowObj) => sumVal + parseFloat(strictColumnExtract(rowObj, 'Incurred Amount')), 0) / matches.length) : 0;
+                return `<td>${averageCalculated > 0 ? '₹' + Math.round(averageCalculated).toLocaleString() : '-'}</td>`;
             }).join('');
             return `<tr><td><strong>${name}</strong></td><td>${data.count}</td>${yearCells}</tr>`;
         }).join('');
+
+        // Auto-assign top diagnostic block element tag header frame view
+        if(sortedDiagnosis.length > 0) {
+            document.getElementById('pDiag').innerText = sortedDiagnosis[0][0];
+        }
+    }
+
+    function buildDualAxisChart(canvasId, dataset, primaryColor, currentChartObj, updateCallback) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if(currentChartObj) currentChartObj.destroy();
+
+        const labels = dataset.map(d => 'FY ' + d.year);
+        const counts = dataset.map(d => d.count);
+        const pays = dataset.map(d => d.totalPay);
+        const acsVals = dataset.map(d => Math.round(d.acs));
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'No. of Claims', data: counts, backgroundColor: '#b2bec3', yAxisID: 'yCount', order: 2 },
+                    { label: 'Pay to Hosp (Incurred)', data: pays, backgroundColor: primaryColor, yAxisID: 'yFinance', order: 3 },
+                    { label: 'ACS Metric Value', data: acsVals, borderColor: '#00cec9', borderWidth: 3, type: 'line', fill: false, yAxisID: 'yFinance', order: 1 }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    yCount: { type: 'linear', position: 'left', title: { display: true, text: 'Claims Volume Count' }, grid: { display: false } },
+                    yFinance: { type: 'linear', position: 'right', title: { display: true, text: 'Financial Metrics (₹)' }, ticks: { callback: v => '₹' + v.toLocaleString() } }
+                }
+            }
+        });
+        updateCallback(chart);
     }
 
     function exportToPDF() {
