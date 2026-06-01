@@ -11,7 +11,7 @@
     <style>
         :root { --primary: #0984e3; --secondary: #00cec9; --dark: #2d3436; --light: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 10px; margin: 0; }
-        .container { max-width: 1250px; margin: auto; padding: 10px; }
+        .container { max-width: 1200px; margin: auto; padding: 5px; }
         
         #uploadScreen { max-width: 550px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.08); }
         .hospital-icon { width: 70px; height: 70px; fill: var(--primary); margin-bottom: 15px; }
@@ -21,24 +21,32 @@
         .top-bar { background: var(--dark); color: white; padding: 12px; border-radius: 8px; display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
         .search-input { padding: 10px; width: 260px; border-radius: 4px; border: none; font-size: 0.9rem; }
         
-        #pdf-report { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e1e8ed; }
-        .hospital-profile { background: var(--primary); color: white; padding: 14px; border-radius: 6px; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 15px; margin-bottom: 15px; }
+        /* Optimized Report Canvas for Clean Single-Page Ingestion */
+        #pdf-report { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e1e8ed; box-sizing: border-box; width: 100%; }
+        .hospital-profile { background: var(--primary); color: white; padding: 12px; border-radius: 6px; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 15px; margin-bottom: 12px; }
         .profile-card span { display: block; font-size: 10px; text-transform: uppercase; opacity: 0.85; margin-bottom: 2px; letter-spacing: 0.5px; }
-        .profile-card strong { font-size: 1.15rem; }
+        .profile-card strong { font-size: 1.1rem; }
         
-        .card { border: 1px solid #e1e8ed; padding: 15px; border-radius: 6px; background: #fff; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--primary); border-bottom: 1px solid #edf2f7; padding-bottom: 6px; }
+        .card { border: 1px solid #e1e8ed; padding: 12px; border-radius: 6px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); page-break-inside: avoid; }
+        h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--primary); border-bottom: 1px solid #edf2f7; padding-bottom: 4px; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 5px; }
-        th { background: #f7fafc; padding: 8px; text-align: left; border-bottom: 2px solid var(--primary); color: #4a5568; }
-        td { padding: 8px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 2px; }
+        th { background: #f7fafc; padding: 6px; text-align: left; border-bottom: 2px solid var(--primary); color: #4a5568; }
+        td { padding: 6px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
         
         .segment-table th { background: #edf2f7; font-weight: 600; color: #2d3436; }
         
-        .report-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
-        .chart-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .chart-container { position: relative; height: 220px; width: 100%; }
+        /* Side-by-side flex layout to save vertical heights */
+        .chart-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; page-break-inside: avoid; }
+        .chart-container { position: relative; height: 160px; width: 100%; box-sizing: border-box; padding-right: 5px; }
         .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+
+        /* Force Print Constraints to Eliminate Truncation Layout Quirks */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            #pdf-report { border: none; padding: 0; width: 100% !important; max-width: 100% !important; }
+            .card { box-shadow: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -188,7 +196,6 @@
         document.getElementById('pName').innerText = strictColumnExtract(firstRecord, 'Providername') || 'N/A';
         document.getElementById('pTrackingID').innerText = strictColumnExtract(firstRecord, 'Herucles Hosp ID') || strictColumnExtract(firstRecord, 'Hercules Hosp ID') || 'N/A';
 
-        // Extract Timeline parameters sequentially
         const years = [...new Set(filtered.map(r => strictColumnExtract(r, 'Financial year')))].filter(Boolean).sort().slice(-3);
         if(years.length === 0) { years.push("Dump Set"); }
 
@@ -198,7 +205,6 @@
         years.forEach(y => {
             const yrSet = filtered.filter(r => strictColumnExtract(r, 'Financial year') == y);
             
-            // Segregate by data string criteria evaluation paths
             const cashlessRows = yrSet.filter(r => {
                 const type = String(strictColumnExtract(r, 'Claim Type') || "").toLowerCase();
                 return !(type.includes('reim') || type.includes('re-im') || type.includes('reimb'));
@@ -208,20 +214,17 @@
                 return (type.includes('reim') || type.includes('re-im') || type.includes('reimb'));
             });
 
-            // Math transformations logic mapping for Cashless
             const cSum = cashlessRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
             const cCount = cashlessRows.length;
             const cAcs = cCount > 0 ? (cSum / cCount) : 0;
             cashlessYoyData.push({ year: y, count: cCount, totalPay: cSum, acs: cAcs });
 
-            // Math transformations logic mapping for Reimbursement
             const rSum = reimbRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
             const rCount = reimbRows.length;
             const rAcs = rCount > 0 ? (rSum / rCount) : 0;
             reimbYoyData.push({ year: y, count: rCount, totalPay: rSum, acs: rAcs });
         });
 
-        // Inject Table Data Array Matrices
         document.getElementById('cashlessBody').innerHTML = cashlessYoyData.map(d => `
             <tr>
                 <td><strong>FY ${d.year}</strong></td>
@@ -240,11 +243,9 @@
             </tr>
         `).join('');
 
-        // Invoke visualization rendering pipelines
         buildDualAxisChart('cashlessChart', cashlessYoyData, '#0984e3', cashlessChartObj, obj => cashlessChartObj = obj);
         buildDualAxisChart('reimbChart', reimbYoyData, '#e17055', reimbChartObj, obj => reimbChartObj = obj);
 
-        // Compute Top 10 High Volume Reports by DIAGNOSIS GROUP
         const diagnosisMap = {};
         filtered.forEach(r => {
             const diagName = strictColumnExtract(r, 'Diagnosis Group') || 'Unmapped Diagnosis Categorization';
@@ -264,7 +265,6 @@
             return `<tr><td><strong>${name}</strong></td><td>${data.count}</td>${yearCells}</tr>`;
         }).join('');
 
-        // Auto-assign top diagnostic block element tag header frame view
         if(sortedDiagnosis.length > 0) {
             document.getElementById('pDiag').innerText = sortedDiagnosis[0][0];
         }
@@ -285,15 +285,20 @@
                 labels: labels,
                 datasets: [
                     { label: 'No. of Claims', data: counts, backgroundColor: '#b2bec3', yAxisID: 'yCount', order: 2 },
-                    { label: 'Pay to Hosp (Incurred)', data: pays, backgroundColor: primaryColor, yAxisID: 'yFinance', order: 3 },
-                    { label: 'ACS Metric Value', data: acsVals, borderColor: '#00cec9', borderWidth: 3, type: 'line', fill: false, yAxisID: 'yFinance', order: 1 }
+                    { label: 'Pay to Hosp', data: pays, backgroundColor: primaryColor, yAxisID: 'yFinance', order: 3 },
+                    { label: 'ACS Metric', data: acsVals, borderColor: '#00cec9', borderWidth: 2.5, type: 'line', fill: false, yAxisID: 'yFinance', order: 1 }
                 ]
             },
             options: {
                 maintainAspectRatio: false,
+                responsive: true,
+                animation: false, /* Disabled to capture sharp chart images instantaneously */
                 scales: {
-                    yCount: { type: 'linear', position: 'left', title: { display: true, text: 'Claims Volume Count' }, grid: { display: false } },
-                    yFinance: { type: 'linear', position: 'right', title: { display: true, text: 'Financial Metrics (₹)' }, ticks: { callback: v => '₹' + v.toLocaleString() } }
+                    yCount: { type: 'linear', position: 'left', ticks: { font: { size: 9 } } },
+                    yFinance: { type: 'linear', position: 'right', ticks: { font: { size: 9 }, callback: v => '₹' + v.toLocaleString() } }
+                },
+                plugins: {
+                    legend: { labels: { boxWidth: 10, font: { size: 9 } } }
                 }
             }
         });
@@ -303,15 +308,25 @@
     function exportToPDF() {
         const reportElement = document.getElementById('pdf-report');
         const hospitalNameCleaned = document.getElementById('pName').innerText.replace(/[^a-zA-Z0-9]/g, '_');
-        html2pdf().set({
-            margin: 0.25,
+        
+        // Configuration architecture calibrated for single landscape page capture
+        const opt = {
+            margin: [0.2, 0.2, 0.2, 0.2],
             filename: `Incurred_ACS_Audit_${hospitalNameCleaned}.pdf`,
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 2, logging: false },
-            jsPDF: { format: 'a4', orientation: 'landscape' }
-        }).from(reportElement).save();
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { 
+                scale: 2, 
+                logging: false, 
+                useCORS: true,
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+            pagebreak: { mode: 'avoid-all' } // Strongly intercepts multi-page breaking logic overrides
+        };
+
+        html2pdf().set(opt).from(reportElement).save();
     }
 </script>
 </body>
 </html>
-
