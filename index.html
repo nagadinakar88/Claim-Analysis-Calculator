@@ -35,17 +35,14 @@
         
         .segment-table th { background: #edf2f7; font-weight: 600; color: #2d3436; }
         
-        /* Rigid CSS Grid columns to force side-by-side rendering */
-        .chart-grid-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; width: 100%; box-sizing: border-box; }
-        .chart-grid-wrapper .card { margin-bottom: 0; min-width: 0; }
-        .chart-box { height: 180px; position: relative; width: 100%; }
+        .chart-box { height: 220px; position: relative; width: 100%; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
 
         @media print {
             body { background: white; padding: 0; margin: 0; }
             #pdf-report { border: none; padding: 0; width: 100% !important; max-width: 100% !important; }
-            .card { box-shadow: none !important; padding: 8px; }
-            .chart-box { height: 165px; }
+            .card { box-shadow: none !important; padding: 8px; margin-bottom: 10px; }
+            .chart-box { height: 200px; }
         }
     </style>
 </head>
@@ -84,10 +81,11 @@
                             <th>No. of Claims in Cashless</th>
                             <th>Total Pay to Hospital (Incurred)</th>
                             <th>Average Claim Size (Cashless ACS)</th>
+                            <th>Total Discount Allowed</th>
                         </tr>
                     </thead>
                     <tbody id="cashlessBody">
-                        <tr><td colspan="4" style="text-align:center; color:#718096;">Execute search parameter to render data rows.</td></tr>
+                        <tr><td colspan="5" style="text-align:center; color:#718096;">Execute search parameter to render data rows.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -101,23 +99,18 @@
                             <th>No. of Claims in Reimbursement</th>
                             <th>Total Incurred Pay (Reimbursement)</th>
                             <th>Average Claim Size (Reimbursement ACS)</th>
+                            <th>Total Discount Amount</th>
                         </tr>
                     </thead>
                     <tbody id="reimbBody">
-                        <tr><td colspan="4" style="text-align:center; color:#718096;">Execute search parameter to render data rows.</td></tr>
+                        <tr><td colspan="5" style="text-align:center; color:#718096;">Execute search parameter to render data rows.</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="chart-grid-wrapper">
-                <div class="card">
-                    <h3>Cashless Dynamic Trend Line Graphic Matrix</h3>
-                    <div class="chart-box" id="cashlessContainer"><canvas id="cashlessChart"></canvas></div>
-                </div>
-                <div class="card">
-                    <h3>Reimbursement Dynamic Trend Line Graphic Matrix</h3>
-                    <div class="chart-box" id="reimbContainer"><canvas id="reimbChart"></canvas></div>
-                </div>
+            <div class="card">
+                <h3>Unified Modality Trend Performance Matrix (Claims vs. ACS)</h3>
+                <div class="chart-box" id="unifiedContainer"><canvas id="unifiedChart"></canvas></div>
             </div>
 
             <div class="card">
@@ -140,8 +133,7 @@
 
 <script>
     let rawData = null;
-    let cashlessChartObj = null;
-    let reimbChartObj = null;
+    let unifiedChartObj = null;
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -214,15 +206,18 @@
                 return (type.includes('reim') || type.includes('re-im') || type.includes('reimb'));
             });
 
+            // Calculate values including dynamic discount capture fields
             const cSum = cashlessRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
+            const cDisc = cashlessRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Discount Amount')) || parseFloat(strictColumnExtract(row, 'Discount')) || 0), 0);
             const cCount = cashlessRows.length;
             const cAcs = cCount > 0 ? (cSum / cCount) : 0;
-            cashlessYoyData.push({ year: y, count: cCount, totalPay: cSum, acs: cAcs });
+            cashlessYoyData.push({ year: y, count: cCount, totalPay: cSum, acs: cAcs, discount: cDisc });
 
             const rSum = reimbRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Incurred Amount')) || 0), 0);
+            const rDisc = reimbRows.reduce((sum, row) => sum + (parseFloat(strictColumnExtract(row, 'Discount Amount')) || parseFloat(strictColumnExtract(row, 'Discount')) || 0), 0);
             const rCount = reimbRows.length;
             const rAcs = rCount > 0 ? (rSum / rCount) : 0;
-            reimbYoyData.push({ year: y, count: rCount, totalPay: rSum, acs: rAcs });
+            reimbYoyData.push({ year: y, count: rCount, totalPay: rSum, acs: rAcs, discount: rDisc });
         });
 
         document.getElementById('cashlessBody').innerHTML = cashlessYoyData.map(d => `
@@ -231,6 +226,7 @@
                 <td>${d.count}</td>
                 <td>₹${d.totalPay.toLocaleString()}</td>
                 <td><strong>₹${Math.round(d.acs).toLocaleString()}</strong></td>
+                <td style="color:#27ae60;">₹${d.discount.toLocaleString()}</td>
             </tr>
         `).join('');
 
@@ -240,12 +236,12 @@
                 <td>${d.count}</td>
                 <td>₹${d.totalPay.toLocaleString()}</td>
                 <td><strong>₹${Math.round(d.acs).toLocaleString()}</strong></td>
+                <td style="color:#27ae60;">₹${d.discount.toLocaleString()}</td>
             </tr>
         `).join('');
 
-        // Completely reset chart containers to guarantee lines render side-by-side
-        cashlessChartObj = rebuildChartContext('cashlessContainer', 'cashlessChart', cashlessYoyData, '#0984e3', cashlessChartObj);
-        reimbChartObj = rebuildChartContext('reimbContainer', 'reimbChart', reimbYoyData, '#e17055', reimbChartObj);
+        // Recreate and render the combined single matrix line graph
+        unifiedChartObj = rebuildUnifiedChart('unifiedContainer', 'unifiedChart', years, cashlessYoyData, reimbYoyData, unifiedChartObj);
 
         const diagnosisMap = {};
         filtered.forEach(r => {
@@ -271,7 +267,7 @@
         }
     }
 
-    function rebuildChartContext(containerId, canvasId, dataset, financialLineColor, currentChartInstance) {
+    function rebuildUnifiedChart(containerId, canvasId, years, cashlessData, reimbData, currentChartInstance) {
         if (currentChartInstance) {
             currentChartInstance.destroy();
         }
@@ -280,19 +276,17 @@
         container.innerHTML = `<canvas id="${canvasId}"></canvas>`;
         
         const ctx = document.getElementById(canvasId).getContext('2d');
-        const labels = dataset.map(d => 'FY ' + d.year);
-        const counts = dataset.map(d => d.count);
-        const pays = dataset.map(d => d.totalPay);
-        const acsVals = dataset.map(d => Math.round(d.acs));
+        const labels = years.map(y => 'FY ' + y);
 
         return new Chart(ctx, {
             type: 'line', 
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Claims Count', data: counts, borderColor: '#74b9ff', backgroundColor: '#74b9ff', borderWidth: 2.5, fill: false, yAxisID: 'yAxisLeft', tension: 0.1, pointRadius: 3.5 },
-                    { label: 'Pay to Hosp', data: pays, borderColor: financialLineColor, backgroundColor: financialLineColor, borderWidth: 2.5, fill: false, yAxisID: 'yAxisRight', tension: 0.1, pointRadius: 3.5 },
-                    { label: 'ACS (₹)', data: acsVals, borderColor: '#00cec9', backgroundColor: '#00cec9', borderWidth: 2.5, fill: false, yAxisID: 'yAxisRight', tension: 0.1, pointRadius: 3.5 }
+                    { label: 'Cashless Claims', data: cashlessData.map(d => d.count), borderColor: '#0984e3', backgroundColor: '#0984e3', borderWidth: 2.5, fill: false, yAxisID: 'yLeft', tension: 0.1, pointRadius: 4 },
+                    { label: 'Reimbursement Claims', data: reimbData.map(d => d.count), borderColor: '#74b9ff', backgroundColor: '#74b9ff', borderWidth: 2.5, fill: false, yAxisID: 'yLeft', tension: 0.1, pointRadius: 4, borderDash: [4, 4] },
+                    { label: 'Cashless ACS (₹)', data: cashlessData.map(d => Math.round(d.acs)), borderColor: '#e17055', backgroundColor: '#e17055', borderWidth: 2.5, fill: false, yAxisID: 'yRight', tension: 0.1, pointRadius: 4 },
+                    { label: 'Reimbursement ACS (₹)', data: reimbData.map(d => Math.round(d.acs)), borderColor: '#ffb8b8', backgroundColor: '#ffb8b8', borderWidth: 2.5, fill: false, yAxisID: 'yRight', tension: 0.1, pointRadius: 4, borderDash: [4, 4] }
                 ]
             },
             options: {
@@ -300,11 +294,11 @@
                 responsive: true,
                 animation: false,
                 scales: {
-                    yAxisLeft: { type: 'linear', position: 'left', title: { display: true, text: 'Vol Count', font: { size: 9, weight: 'bold' } }, ticks: { font: { size: 8 } } },
-                    yAxisRight: { type: 'linear', position: 'right', title: { display: true, text: 'Financials (₹)', font: { size: 9, weight: 'bold' } }, ticks: { font: { size: 8 }, callback: v => '₹' + v.toLocaleString() } }
+                    yLeft: { type: 'linear', position: 'left', title: { display: true, text: 'No. of Claims Volume', font: { size: 9.5, weight: 'bold' } }, ticks: { font: { size: 8.5 } } },
+                    yRight: { type: 'linear', position: 'right', title: { display: true, text: 'Average Claim Size - ACS (₹)', font: { size: 9.5, weight: 'bold' } }, ticks: { font: { size: 8.5 }, callback: v => '₹' + v.toLocaleString() } }
                 },
                 plugins: {
-                    legend: { position: 'top', labels: { boxWidth: 10, font: { size: 8.5 } } }
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 9 } } }
                 }
             }
         });
@@ -316,7 +310,7 @@
         
         const opt = {
             margin: [0.15, 0.2, 0.15, 0.2],
-            filename: `Incurred_ACS_Audit_${hospitalNameCleaned}.pdf`,
+            filename: `Incurred_Unified_Audit_${hospitalNameCleaned}.pdf`,
             image: { type: 'jpeg', quality: 1.0 },
             html2canvas: { 
                 scale: 2, 
